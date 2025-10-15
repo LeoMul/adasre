@@ -1,14 +1,25 @@
 module variables
     implicit none
+    real*8,parameter :: RYDBERGCM= 109737.316
     integer :: numblocks = 0
+
+    !input stuff
     integer            :: ntar1 
-    real*8,allocatable :: energyFromInput(:)
+    integer            :: nzed,nelec
+    real*8, allocatable:: energyFromInput(:)
+    integer,allocatable:: angSFromInput  (:)
+    integer,allocatable:: angLFromInput  (:)
+    integer,allocatable:: angPFromInput  (:)
+    integer,allocatable:: angJFromInput  (:) !technically 2J
+    integer,allocatable:: cfNumFromInput (:)
+
     real*8             :: groundFromInput 
 
+    !fixed dimensions, to be cleaned up 
     integer, parameter :: NUM_N1 = 1000 
     integer, parameter :: NUM_N  = 1000 
-    integer, parameter :: NUM_C  = 1000 
-    integer, parameter :: numres = 2000 
+    integer, parameter :: NUM_C  = 20000 
+    integer, parameter :: numres = 2000000 
 !    integer, parameter :: nlevels = 210 
     integer :: nlevels
     integer, parameter :: ntemps = 13
@@ -31,8 +42,8 @@ module variables
     real*8,allocatable  :: upsilon(:,:,:)
 
 
-
-
+    character*4 :: char4
+    integer :: offset
     real*8  :: energyNstates(NUM_N)
     integer  :: numberContinuum,numberContinuumSave
 

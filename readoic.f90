@@ -7,10 +7,10 @@ subroutine readoic(file,core)
     eof = .false.
     open(1,file=file,action='read')
     print*,'inside file = ',file,eof
-
+    blknum = 0
     do while(.not. eof)
         read(1,*)
-        call readblockform(eof,core)
+        call readblockform(eof,core,blknum)
     end do 
     close(1)
 

@@ -1,13 +1,14 @@
-subroutine readblockform(eof,core)
+subroutine readblockform(eof,core,blknum)
     use variables
+    use configs
     implicit none 
+    integer,intent(inout) :: blknum
     logical :: eof , core ,check
     integer :: nread ,iostat ,checkint
-    integer :: max_iter = 2**15 
+    integer :: max_iter = 2**30
     character*9 :: dummy 
     character*9 :: radIndicator = 'RADIATIVE'
 
-    character*5 :: char5 
     character*3 :: char3 
     real*8 :: thisground
     integer :: cf1,cf2
@@ -31,9 +32,16 @@ subroutine readblockform(eof,core)
         return 
     end if 
     backspace(1)
-    read(1,'(A3)',iostat=iostat)  char3
+    blknum = blknum + 1
+    print*,'Block ',blknum,'core = ',core
+    princN = 0 
+    orbL   = 0 
+    read(1,'(A3,12X,I2,6X,I2,4X,100(I3,I2))',iostat=iostat) char3,nzed &
+                        ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
 
     read(char3,'(I3)') nread
+
+
     print*,'I AM READING',nread,iostat
     allocate(amICore(nread),configMarker(nread))
     numblocks = numblocks + 1
@@ -41,6 +49,12 @@ subroutine readblockform(eof,core)
     do ii = 1,nread
         read(1,'(I5)') configMarker(ii)
     end do 
+    do  ii =1,nread 
+        backspace(1)
+    end do 
+
+    call decode_eissner(nread)
+
     amICore = 0 
     do ii = nread,1,-1 
         if (configMarker(ii) .gt. 0) then 
@@ -49,7 +63,7 @@ subroutine readblockform(eof,core)
             exit 
         end if 
     end do 
-    print*,'hello am i the core ',core,amICore
+    !print*,'hello am i the core ',core,amICore
 
 
     read(1,*)
@@ -73,21 +87,22 @@ subroutine readblockform(eof,core)
 
         if (numresfound .gt. numres) stop 'dimensions exceed - numres'
 
-        AAARRAY (numresfound)   = aa 
-        LV1ARRAY(numresfound)   = LV1 
-        LV2ARRAY(numresfound)   = LV2 
+        AAARRAY (numresfound)    = aa 
+        LV1ARRAY(numresfound)    = LV1 
+        LV2ARRAY(numresfound)    = LV2 
         W_RES_STATE(numresfound) = w 
-        E_RES_STATE(numresfound)= ediff+e1
+        E_RES_STATE(numresfound) = ediff+e1
 
-        AARATE_CONT(lv1,lv2) = aa 
+        !AARATE_CONT(lv1,lv2) = aa 
 
 
-        print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint 
-            print*,LV1ARRAY(26),LV2ARRAY(26)
+         
+            !print*,LV1ARRAY(26),LV2ARRAY(26)
     end if 
+    !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         !if (lv1 .eq. 375) stop 'stopping here'
     end do 
-    
+    print*,'I have found ',numresfound, ' resonances.'
     !print*,cf
 
 
@@ -96,7 +111,7 @@ subroutine readblockform(eof,core)
     !read(1,*)qewwqe
     !print*,qewwqe
     read(1,'(A10,I5,45X,F15.6)',iostat=iostat) dummy,nlevels,thisground
-    PRINT*,'nlevels,iostat=',NLEVELS,iostat
+    PRINT*,'nlevels,iostat=',NLEVELS,iostat,thisground
     if (iostat.lt.0) stop
     read(1,*)
 
@@ -105,7 +120,7 @@ subroutine readblockform(eof,core)
         !do stuff with this 
         kk = 0
         read(1,123) lv,kk,kk,kk,kk,kk,ediff,kk
-        print'(F15.6,i10)',ediff,kk
+        !print'(F15.6,i10)',ediff,kk
         !print*,contIndexChar,contIndexChar.eq.emptyChar
         !we are in an N+1 correlation state.
         E_RES_STATE(lv) = ediff + thisground
@@ -133,7 +148,7 @@ subroutine readblockform(eof,core)
     write(25,*) E_RES_STATE(124)
     energyNstates = energyNstates - groundOfCont 
     !E_RES_STATE = E_RES_STATE - groundOfCont
-    print*,'my shape is',shape(W_SORTED),numblocks
+    !print*,'my shape is',shape(W_SORTED),numblocks
 
     !if (allocated(W_SORTED)) deallocate(W_SORTED)
 
@@ -148,7 +163,7 @@ subroutine readblockform(eof,core)
 
         LV1 = LV1ARRAY(II)
         LV2 = LV2ARRAY(II)
-        print*,'transferring',lv1,lv2,ii,numresfound,LV1ARRAY(26)
+        !print*,'transferring',lv1,lv2,ii,numresfound,LV1ARRAY(26)
         AARATE_SORTED(LV1,LVMAP(LV2)) = AARATE_SORTED(LV1,LVMAP(LV2))  + abs(AAARRAY(ii))
         W_SORTED     (LV1) = W_RES_STATE(II)
         !just ii here - we corrected the ordering above
@@ -159,7 +174,7 @@ subroutine readblockform(eof,core)
 
 
 
-    if (numberContinuumSave .ne. numberContinuum) print*,'hello continuum error'
+    !if (numberContinuumSave .ne. numberContinuum) print*,'hello continuum error'
 
     allocate(branching_ratio(nlevels,numberContinuum))
 
@@ -169,13 +184,13 @@ subroutine readblockform(eof,core)
         suma = sum( branching_ratio( jj , : ) )
         if(suma.gt.0)branching_ratio(jj,:)=branching_ratio(jj,:)/suma
     end do 
-    do jj = 1,nlevels 
-        do ii = 1,numberContinuum 
-            if ( AARATE_SORTED(jj,ii) .gt. 1e-20) then 
-                print'(2I5,2F14.7,2ES11.2)', jj,ii,E_RES_SORTED(jj), energyNstates(ii),AARATE_SORTED(jj,ii),branching_ratio(jj,ii)
-            end if 
-        end do 
-    end do 
+    !do jj = 1,nlevels 
+    !    do ii = 1,numberContinuum 
+    !        if ( AARATE_SORTED(jj,ii) .gt. 1e-20) then 
+    !            print'(2I5,2F14.7,2ES11.2)', jj,ii,E_RES_SORTED(jj), energyNstates(ii),AARATE_SORTED(jj,ii),branching_ratio(jj,ii)
+    !        end if 
+    !    end do 
+    !end do 
 
     if (.not. allocated(upsilon)) then 
         allocate( upsilon(ntemps , nlevels , nlevels ) )

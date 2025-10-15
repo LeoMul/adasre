@@ -1,0 +1,1 @@
+gfortran reference_data.f90 variables.f90 configs.f90 input.f90 readoic.f90 readblockform.f90 test.f90 upsilon.f90 -O3
