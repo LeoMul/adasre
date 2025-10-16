@@ -12,8 +12,13 @@ module configs
     integer           :: princN(totalshelldim)
     integer           :: orbL  (totalshelldim)
     integer           :: NII(cfdim)
-    integer           :: QS0(shelldim)
-    character*1       :: QL0(shelldim)
+    
+    integer           :: QS0    (shelldim)
+    character*1       :: QL0    (shelldim)
+    character*4       :: QL0TEMP(shelldim)
+    character*4       :: char4Temp
+    character*1       :: char1Temp
+
     character*1       :: MBLNK =' '
     integer           :: NGR,MA0,MB0 
     character*8       :: char8
@@ -58,19 +63,22 @@ module configs
                  /
     contains 
 
-    subroutine decode_eissner(ncf)
+    subroutine decode_eissner(ncf,formatted)
         !this code is partially lifted from Nigel Badnell's ADASDR 
         !I have not refactored the go to's
 
-        !The part to decode Eissner is from ADasDR 
+        !The part to decode Eissner is from adasDR 
         !The part which isolates the continuum portion is original 
         !That part has a goto in it - for ease of use
         !Its use is fairly clear - but i should probably do better with 
         !it.
 
         implicit none 
-        integer :: ncf 
+        integer           :: ncf 
         integer           :: ncontium_cf
+        integer           :: iostat
+        logical           :: formatted 
+
 
 179     FORMAT(2I5,2X,I3,I2,1X,10(I2,A1))
         ncontium_cf = 0 
@@ -80,9 +88,36 @@ module configs
         open(20,file='configs')
 
         do i = 1,ncf 
-            READ(1,179,end=1002)NII(I),NGR,MA0,MB0,&
-                                (QS0(J),QL0(J),J=1,10)
+            !Here I simply check the formatted-ness of the file at every 
+            !read. For the configurations we are only doing of order 
+            !10 - 100 configurations, and I can live with that.
+            !Additionally, unlike the auger reads - this read is fairly nuanced.
+            !and i'd rather more maintainable code at the cost of an 
+            !immeasurably small performance cost.
+            if (formatted) then
+                !for a formatted file, life is easy, life can be dream,
+                !as the kids say. 
+                READ(1,179,end=1002)NII(I),NGR,MA0,MB0,&
+                                    (QS0(J),QL0(J),J=1,10)
+            else 
+                !In unformatted, the Eissner notation is stored in 
+                !integer*4. This is precisely 3 more bytes than necessary.
+                !I need to read this in as a character*4 - and then 
+                !cast down to a character*1 which is what I actually need.
+                READ(1,iostat=iostat,end=1002)NII(I),NGR,MA0,MB0,&
+                                    (QS0(J),QL0TEMP(J),J=1,10)
+                do j = 1,10 
+                    char4Temp = QL0TEMP(J)
+                    char1Temp(1:1) = char4Temp(1:1)
+                    QL0(J) = char1Temp
+                end do 
+
+
+
+            end if 
+            write(20,*) 'DEBUG',i,QL0(1)
             
+
             DO 16 J=1,10
                 QSB(I,J)=MBLNK
                 IF(QL0(J).EQ.MBLNK)GO TO 16
@@ -92,9 +127,9 @@ module configs
                 mlast=m
                 IF(M.GT.0)QSB(I,J)=LIT(M)
                 DO K=1,size(LIT)
-                  WRITE(20,*) QL0(J),LIT(K)
+                  !WRITE(20,*) QL0(J),LIT(K)
                   IF(QL0(J).EQ.LIT(K)) then 
-                    WRITE(20,*)'going to 19'
+                    !WRITE(20,*)'going to 19'
                     GO TO 19
                   end if 
                 ENDDO
@@ -110,25 +145,27 @@ module configs
                 QMB_CONT(I,J) = QMB(I,J)
                   IF(IMATCH.EQ.-I)MXOCC(K)=MAX(M,MXOCC(K))
                 ENDIF
-            16  ENDDO
-        write(20,*) QSB(I,:)
-        write(20,*) QLB(I,1:lmx(i))
+        16  ENDDO
+        write(20,'(10(I2,A1))') (QS0(J),QL0(J),J=1,lmx(i))
+        !write(20,*) QSB(I,:)
+        !write(20,*) QLB(I,1:lmx(i))
         
         if (NII(I) .LT. 0 ) then 
             !we are in a continuum state. ignore the last occupation. 
             ncontium_cf=ncontium_cf+1
-            LMX_CONT(I) = lmx(i)-1
-            QSB_CONT(I,:) = MBLNK
-            QLB_CONT(I,:) = 0 
-            QMB_CONT(I,:) = 0 
-            do j = 1, LMX_CONT(I)
-                QSB_CONT(I,J) = QSB(I,J)
-                QLB_CONT(I,J) = QLB(I,J)
-                QMB_CONT(I,J) = QMB(I,J)
+            LMX_CONT(ncontium_cf) = lmx(i)-1
+            QSB_CONT(ncontium_cf,:) = MBLNK
+            QLB_CONT(ncontium_cf,:) = 0 
+            QMB_CONT(ncontium_cf,:) = 0 
+            do j = 1, LMX_CONT(ncontium_cf)
+                QSB_CONT(ncontium_cf,J) = QSB(I,J)
+                QLB_CONT(ncontium_cf,J) = QLB(I,J)
+                QMB_CONT(ncontium_cf,J) = QMB(I,J)
             end do 
-            
-            !print*, QSB_CONT(I,:)
-            !print*, QLB_CONT(I,1:LMX_CONT(i))
+            write(20,*) 'Debug Cont'
+            write(20,*) 
+            !write(20,*) QLB_CONT(I,1:LMX_CONT(i)),QSB_CONT(I,:)
+            write(20,*) (QLB_CONT(ncontium_cf,J),QSB_CONT(ncontium_cf,J),J=1,LMX_CONT(ncontium_cf)) 
         end if 
 
 
@@ -143,13 +180,15 @@ module configs
         QMB_CONT_UNIQUE(1,:) = QMB_CONT(1,:)
         LMX_CONT_UNIQUE(1)   = LMX_CONT(1)
         ncontium_cf_UNIQUE = 1
+        write(20,*) 'First cont'
+        write(20,*) (QLB_CONT(1,J),QSB_CONT(1,J),J=1,LMX_CONT(1)) 
 
         do i = 2, ncontium_cf 
             do j = 1 , ncontium_cf_UNIQUE 
                 check1 = compareTwoArraysCha(QSB_CONT(I,:),QSB_CONT_UNIQUE(J,:))
                 check2 = compareTwoArraysInt(QLB_CONT(I,:),QLB_CONT_UNIQUE(J,:))
                 if ( check1.AND.check2) THEN
-                    go to 1 
+                    go to 1 !i know i know its a goto, but its actually readable ok
                 end if
             end do 
 

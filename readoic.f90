@@ -4,10 +4,10 @@ subroutine readoic(file,core)
     
     logical :: eof,core
     logical :: form 
-    form = .true.
+    form = .false.
 
     eof = .false.
-    open(1,file=file,action='read',form='formatted')
+    open(1,file=file,action='read',form='unformatted')
     print*,'inside file = ',file,eof
     blknum = 0
     do while(.not. eof)
@@ -20,6 +20,7 @@ subroutine readoic(file,core)
 
         call readblockform(eof,core,blknum,form)
     end do 
+    print*,'finished with file ',file
     close(1)
 
 end subroutine

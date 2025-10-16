@@ -1,4 +1,5 @@
 subroutine readblockform(eof,core,blknum,formatted)
+    !this routine needs to be refactored into subroutines 
     use variables
     use configs
     implicit none 
@@ -39,6 +40,7 @@ subroutine readblockform(eof,core,blknum,formatted)
 
     if (IS_IOSTAT_END(iostat)) then 
         eof = .true. 
+        print*,' End of file detected, exiting this file. Iostat=',iostat
         return 
     end if 
 
@@ -50,15 +52,19 @@ subroutine readblockform(eof,core,blknum,formatted)
     print*,'Block ',blknum,'core = ',core
     princN = 0 
     orbL   = 0 
+
+    !using iostat to catch an exception with doing too many reads
+    !it would have been more stable had NRB told the oic file how many 
+    !orbitals are present.
     if (formatted) then 
         read(1,'(A3,12X,I2,6X,I2,4X,100(I3,I2))',iostat=iostat) char3,nzed &
                             ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
         read(char3,'(I3)') nread
     else 
-        read(1) nread, nzed ,nelec,(princN(ii),orbL(ii),ii=1,14)
+        read(1,iostat = iostat) nread, nzed ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
     end if 
 
-
+    !it is now time to read the configurations. 
     print*,'I AM READING',nread,iostat
     allocate(amICore(nread),configMarker(nread))
     numblocks = numblocks + 1
@@ -70,15 +76,18 @@ subroutine readblockform(eof,core,blknum,formatted)
     !     backspace(1)
     ! end do 
     ! call decode_eissner(nread)
-    if (formatted) then 
-        do ii = 1,nread 
-            read(1,*)
-        end do 
-    else 
-        do ii = 1,nread 
-            read(1)
-        end do 
-    end if 
+
+    call decode_eissner(nread,formatted)
+    configMarker(1:nread) = NII(1:nread) !transfer the config maerks.
+    ! if (formatted) then 
+    !     do ii = 1,nread 
+    !         read(1,*)
+    !     end do 
+    ! else 
+    !     do ii = 1,nread 
+    !         read(1)
+    !     end do 
+    ! end if 
 
     amICore = 0 
     do ii = nread,1,-1 
@@ -281,7 +290,6 @@ subroutine readblockform(eof,core,blknum,formatted)
         cf1 = 1 
         cf2 = 1
         if (d1 .eq.nzed .and. d2.eq.nelec) then 
-            !READ(1,*)
             !skip radiative rates until we find something new
             do ii = 1,max_iter
                 read(1,iostat=iostat)cf1,lv1,w,cf2,lv2, w, aa ,ediff ,e1 

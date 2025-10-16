@@ -4,7 +4,6 @@ program main
     use reference_data
     implicit none 
 
-    !indexed according to lv ... could be a bad idea.
     call input
     
     open(25,file='debug')
