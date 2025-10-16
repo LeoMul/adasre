@@ -1,10 +1,13 @@
-subroutine readblockform(eof,core,blknum,formatted)
+subroutine readblockform(eof,core,blknum,formatted,firstread)
     !this routine needs to be refactored into subroutines 
     use variables
     use configs
     implicit none 
     integer,intent(inout) :: blknum
-    logical :: eof , core ,check
+    logical :: eof  ,check
+    
+    logical,intent(inout) :: core
+    logical,intent(inout) :: firstread
     integer :: nread ,iostat ,checkint
     integer :: max_iter = 2**30
     character*9 :: dummy 
@@ -117,7 +120,7 @@ subroutine readblockform(eof,core,blknum,formatted)
             check = .false.
             check = XNOR( core , amICore(cf1).gt.0)
             if(check) checkint = 1
-            if (check) then
+            if (check.or.firstread) then
                 numresfound = numresfound + 1
                 if (numresfound .gt. numres) then 
                     !put a dynamic reallocation here
@@ -138,8 +141,10 @@ subroutine readblockform(eof,core,blknum,formatted)
             checkint = 0
             check = .false.
             check = XNOR( core , amICore(cf1).gt.0)
+            !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
+
             if(check) checkint = 1
-            if (check) then
+            if (check.or.firstread) then
                 numresfound = numresfound + 1
                 if (numresfound .gt. numres) then 
                     !put a dynamic reallocation here
@@ -154,6 +159,11 @@ subroutine readblockform(eof,core,blknum,formatted)
         !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         end do 
     end if 
+
+
+    !we only need the core from one block, so set it to false if we havent already.
+    if(core)           core = .false. 
+    if(firstread) firstread = .false.
 
 
     print*,'I have found ',numresfound, ' resonances.'

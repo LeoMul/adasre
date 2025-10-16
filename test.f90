@@ -4,17 +4,24 @@ program main
     use reference_data
     implicit none 
 
+    logical :: readCore ,firstread
+
     call input
+    
+    readCore  = .true. 
+    firstread = .true.
     
     open(25,file='debug')
 
-    !call readoic('o1',.true.)
-    call readoic('o2',.false.)
+    !call readoic('o1',readCore)
+    call readoic('o2',readCore,firstread)
 
     open(30,file='adf04standin')
     !print*,'hello',numberContinuumSave
     !print*,ncontium_cf_UNIQUE
     !print*,LMX_CONT
+
+    !todo: move this to an actual subroutine 
     write(30,'(A2,"+",I2,I10,I10,f15.4,"(0Y)")') ELEM2(nzed),NZED-nelec+1,NZED,NZED-nelec+2,0.0d0
     cflabel = ''
     do ii = 1, ncontium_cf_UNIQUE 

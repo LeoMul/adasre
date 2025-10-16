@@ -1,8 +1,9 @@
-subroutine readoic(file,core)
+subroutine readoic(file,core,firstread)
     use variables
     character*2 :: file
-    
-    logical :: eof,core
+    logical,intent(inout) :: core 
+    logical,intent(inout) :: firstread
+    logical :: eof
     logical :: form 
     form = .false.
 
@@ -18,7 +19,7 @@ subroutine readoic(file,core)
             read(1)
         end if 
 
-        call readblockform(eof,core,blknum,form)
+        call readblockform(eof,core,blknum,form,firstread)
     end do 
     print*,'finished with file ',file
     close(1)
