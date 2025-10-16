@@ -3,4 +3,4 @@ Post processes the (un)formatted oic files of Nigel Badnell's `AUTOSTRUCTURE` [c
 
 This code can process both `RUN='DR'` and `RUN='RE'` runs from the `AUTOSTRUCTURE` package. In either case, the radiative rates are ignored and the resonant-branching-ratios assume only Auger decays. This is valid for excitation, but not for DR. 
 
-The code expects a file called `input` file - containing the number of bound states in the $N$ electron system
+The code expects a file called `input` file - containing the number of bound states in the $N$ electron system, along with the corresponding output of the `LEVELS` files from the structure run. Eventually this will be namelist-ed. 
