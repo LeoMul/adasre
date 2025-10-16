@@ -14,10 +14,13 @@
         real*8,parameter :: h_si  = 6.63e-34  
         real*8,parameter :: h_ryd = h_si / (electrostat* ryd_ev)
         real*8,parameter :: half= 0.5e0
+        real*8,parameter :: h_ryd_on_2 = h_ryd * half
         real*8 :: energydiff
         real*8 :: temps_ryd(ntemps) 
         real*8 :: oneOverT 
         real*8 :: contribution 
+        real*8 :: tfac 
+        real*8 :: strength 
         integer :: lower,upper,dd,kk
         temps = (/ 1.80E+03 &  
                   ,4.50E+03 &  
@@ -35,9 +38,6 @@
         
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
 
-        do kk = 1, ntemps 
-            oneOverT = 1./temps_ryd(kk)
-
             do lower = 1,numberContinuum 
                 do upper = lower+1,numberContinuum
                     sum = 0.0d0 
@@ -49,25 +49,24 @@
                         b = branching_ratio(dd,upper)
                         w = W_SORTED       (dd)
                         if (energydiff .gt. 0.0d0) then 
-                        if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
-                            contribution = a * b * w * half * h_ryd * exp(- energydiff * oneOverT )* oneOverT
-                            if ( ((lower.eq.1) .and. (upper.eq.3)) .and. (kk.eq.6)) then 
+                            if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
+                                strength = a * b * w * h_ryd_on_2
+                                do kk = 1, ntemps 
+                                    oneOverT = 1./temps_ryd(kk)
 
-                            write(25,'(3I5,4ES10.3,3ES13.6)') lower,upper,dd,a,b,w,energydiff,E_RES_SORTED(dd)-groundFromInput,energyFromInput(upper)-energyFromInput(1)
-                            write(25,*) 'check ', oneOverT/13.606 , energydiff*13.606,h_ryd*13.606,contribution,nlevels 
-                            if (contribution .gt. 1e-1) write(25,*) 'huh'
-                            end if 
+                                    tfac = exp(- energydiff * oneOverT )
+                                    tfac = tfac * oneOverT
 
-                            sum = sum +  contribution
-
-                        end if
+                                    contribution = strength * tfac 
+                                    upsilon(kk,lower,upper) = upsilon(kk,lower,upper) + contribution
+                                end do
+                            end if
                         end if 
                     end do 
 
-                    upsilon(kk,lower,upper) = upsilon(kk,lower,upper) + sum 
+                   ! upsilon(kk,lower,upper) = upsilon(kk,lower,upper) + sum 
                 end do 
             end do 
-        end do 
         
 
         !close(25)
