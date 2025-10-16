@@ -1,5 +1,7 @@
     subroutine resonantUpsilon( )
-        use variables, only:temps,E_RES_SORTED,AARATE_SORTED,branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,upsilon,energyFromInput,groundFromInput
+        use variables, only:temps,E_RES_SORTED,AARATE_SORTED,&
+        branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,&
+        upsilon,energyFromInput,groundFromInput
         !add contribution from this block to the upsilons. 
         !this can absolutely be made better
         !this code is incredibly ugly 
@@ -44,12 +46,13 @@
                     !write(25,*) 'Transition ',lower,' to ',upper
                     
                     do dd = 1, nlevels !number of lv numbers
-                        energydiff = E_RES_SORTED(dd) - energyFromInput(upper) 
+                        energydiff = E_RES_SORTED(dd) - & 
+                                     energyFromInput(upper) 
                         a = AARATE_SORTED  (dd,lower)
                         b = branching_ratio(dd,upper)
                         w = W_SORTED       (dd)
                         if (energydiff .gt. 0.0d0) then 
-                            if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
+                         if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
                                 strength = a * b * w * h_ryd_on_2
                                 do kk = 1, ntemps 
                                     oneOverT = 1./temps_ryd(kk)
@@ -58,7 +61,8 @@
                                     tfac = tfac * oneOverT
 
                                     contribution = strength * tfac 
-                                    upsilon(kk,lower,upper) = upsilon(kk,lower,upper) + contribution
+                                    upsilon(kk,lower,upper) = &
+                                 upsilon(kk,lower,upper) + contribution
                                 end do
                             end if
                         end if 
