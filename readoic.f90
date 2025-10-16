@@ -1,14 +1,18 @@
-subroutine readoic(file,core,firstread)
+subroutine readoic(file,core,firstread,form)
     use variables
-    character*2 :: file
+    character(len=*) :: file
     logical,intent(inout) :: core 
     logical,intent(inout) :: firstread
     logical :: eof
     logical :: form 
-    form = .false.
 
     eof = .false.
-    open(1,file=file,action='read',form='unformatted')
+    if (form) then 
+        open(1,file=file,action='read',form='formatted')
+    else 
+        open(1,file=file,action='read',form='unformatted')
+    end if 
+
     print*,'inside file = ',file,eof
     blknum = 0
     do while(.not. eof)

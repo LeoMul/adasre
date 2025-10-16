@@ -1,27 +1,50 @@
 subroutine readblockform(eof,core,blknum,formatted,firstread)
+    !lpm 16.10.25: 
+    !This reads an oic file, formatted or unformatted.
+    !Heavy reads are coded twice - once for form and once for unform.
+    !This has better performance than checking the formatted logic every
+    !time a record is read.
+    !This code is i/o limited - optimizations such as this matter.
+    !It however comes at the cost of some code needs to be edited in
+    !more than one place. I personally can live with this, but the user
+    !may find it useful to check any code they edit. 
+
     !this routine needs to be refactored into subroutines 
+
+    !Current todo's here:
+    !1. dynamic memory reallocation for resonances read in
+    !2. some refactoring of the logic, i.e when do we include the core?
+
     use variables
     use configs
     implicit none 
-    integer,intent(inout) :: blknum
-    logical :: eof  ,check
     
+    !input variables. 
+    logical,intent(inout) :: eof
+    logical,intent(in   ) :: formatted   
+    integer,intent(inout) :: blknum
     logical,intent(inout) :: core
     logical,intent(inout) :: firstread
-    integer :: nread ,iostat ,checkint
-    integer :: max_iter = 2**30
-    character*9 :: dummy 
-    character*9 :: radIndicator = 'RADIATIVE'
 
-    logical :: formatted 
-
-    character*3 :: char3 
-    real*8 :: thisground
+    !Flags for reading 
+    logical :: check
+    integer :: nread ,iostat ,checkint,coreint
     integer :: cf1,cf2
-    INTEGER :: COREINT 
+    integer :: d1,d2
     integer, allocatable :: amICore(:),configMarker(:)
 
-    integer :: d1,d2
+    !fixed iter - needs to be refactored
+    integer :: max_iter = 2**30
+
+    !temporary character variables 
+    character*9 :: dummy 
+    character*9 :: radIndicator = 'RADIATIVE'
+    character*3 :: char3 
+
+    !ground of this n-l (or core) block
+    real*8 :: thisground
+
+
 
     !initializations.
     LVMAP = 0 
@@ -40,25 +63,29 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     else 
         read(1,iostat = iostat)
     end if  
-
+    
+    !check we are not running off the end 
     if (IS_IOSTAT_END(iostat)) then 
         eof = .true. 
         print*,' End of file detected, exiting this file. Iostat=',iostat
         return 
     end if 
 
-    !go back
+    !go back - it's rewind time 
     backspace(1)
 
-
+    !Keep track of the number of blocks read for my records. 
     blknum = blknum + 1
     print*,'Block ',blknum,'core = ',core
+
+    !Initialize 
     princN = 0 
     orbL   = 0 
 
     !using iostat to catch an exception with doing too many reads
     !it would have been more stable had NRB told the oic file how many 
-    !orbitals are present.
+    !orbitals are present - but this appears to work, at least on gnu, arm64.
+    !Time - and testing - will reveal if this needs to be coded better. 
     if (formatted) then 
         read(1,'(A3,12X,I2,6X,I2,4X,100(I3,I2))',iostat=iostat) char3,nzed &
                             ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
@@ -69,28 +96,15 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
 
     !it is now time to read the configurations. 
     print*,'I AM READING',nread,iostat
+
     allocate(amICore(nread),configMarker(nread))
     numblocks = numblocks + 1
 
-    ! do ii = 1,nread
-    !     read(1,'(I5)') configMarker(ii)
-    ! end do 
-    ! do  ii =1,nread 
-    !     backspace(1)
-    ! end do 
-    ! call decode_eissner(nread)
-
+    !Get the configs.
     call decode_eissner(nread,formatted)
-    configMarker(1:nread) = NII(1:nread) !transfer the config maerks.
-    ! if (formatted) then 
-    !     do ii = 1,nread 
-    !         read(1,*)
-    !     end do 
-    ! else 
-    !     do ii = 1,nread 
-    !         read(1)
-    !     end do 
-    ! end if 
+
+    configMarker(1:nread) = NII(1:nread) !transfer the config markers.
+
 
     amICore = 0 
     do ii = nread,1,-1 
@@ -162,8 +176,15 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
 
 
     !we only need the core from one block, so set it to false if we havent already.
-    if(core)           core = .false. 
-    if(firstread) firstread = .false.
+    
+    if(core) then 
+        core = .false. 
+        write(90,*) 'Setting core      to false. I have counted the core in this block.'
+    end if 
+    if(firstread) then 
+        firstread = .false. 
+        write(90,*) 'Setting firstread to false. I have counted the core in this block.'
+    end if 
 
 
     print*,'I have found ',numresfound, ' resonances.'
@@ -293,6 +314,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 if (cf1.eq.0)  exit
             end do 
         end if 
+        print*,'finished skipping radiative'
         113  FORMAT(6I5,1PE15.5,2(0PF15.6))
     else !we ar unformatted
         read(1) d1,d2 
@@ -306,18 +328,19 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 if (cf1.eq.0)  exit
             end do 
         end if 
+        print*,'finished skipping radiative'
     end if 
 
 
-    print*,'finished skipping radiative'
-    !STOP 
-
     numberContinuumSave = numberContinuum
-
+    !clean up after yourself.
+    deallocate(amICore,configMarker)
 
     contains 
     
     function XNOR(L1,L2) 
+        !xnor logical gate - might need to remove - refactor needed
+        !where this code is called.
         logical :: l1,l2,xnor 
 
         xnor = .false. 
