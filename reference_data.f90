@@ -1,8 +1,8 @@
 module reference_data 
 
-      CHARACTER(LEN=2) ELEM2(92)  
+      CHARACTER(LEN=2) ELEM(92)  
       DATA                                                             &            
-      ELEM2/'H ','He','Li','Be','B ','C ','N ','O ','F ','Ne','Na','Mh'&
+      ELEM /'H ','He','Li','Be','B ','C ','N ','O ','F ','Ne','Na','Mh'&
       ,'Al','Si','P ','S ','Cl','Ar','K ','Ca','Sc','Ti','V ','Cr','Mm'&
       ,'Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rn','Sr'&
       ,'Y ','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sn'&

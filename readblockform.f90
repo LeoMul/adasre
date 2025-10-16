@@ -40,6 +40,9 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     character*9 :: dummy 
     character*9 :: radIndicator = 'RADIATIVE'
     character*3 :: char3 
+    
+    !iters 
+    integer :: ii ,jj 
 
     !ground of this n-l (or core) block
     real*8 :: thisground

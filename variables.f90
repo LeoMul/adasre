@@ -27,8 +27,7 @@ module variables
     integer, parameter :: ntemps = 13
     real*8             :: temps(ntemps)
 
-    integer :: jj 
-    integer :: ii, continuumIdex,continuumIdexprev
+    integer :: continuumIdex,continuumIdexprev
     integer :: lv 
 
     !arrays for calculations 
@@ -43,7 +42,6 @@ module variables
     real*8,allocatable  :: upsilon(:,:,:)
 
 
-    character*4 :: char4
     integer :: offset
     integer  :: numberContinuum,numberContinuumSave
 

@@ -1,7 +1,7 @@
     subroutine resonantUpsilon( )
         use variables, only:temps,E_RES_SORTED,AARATE_SORTED,&
         branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,&
-        upsilon,energyFromInput,groundFromInput
+        upsilon,energyFromInput
         !add contribution from this block to the upsilons. 
         !this can absolutely be made better
         !this code is incredibly ugly 
