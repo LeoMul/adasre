@@ -69,4 +69,10 @@ program main
     close(30)
     close(25)
 
+    !open(45,file='energies')
+    !do ii = 1 , numberContinuumSave
+    !    write(45,*) energyNstates(ii),energyFromInput(ii)-groundFromInput
+    !end do 
+    !close(45)
+
 end program
