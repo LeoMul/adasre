@@ -9,7 +9,7 @@ program main
     
     open(25,file='debug')
 
-    call readoic('o1',.true.)
+    !call readoic('o1',.true.)
     call readoic('o2',.false.)
 
     open(30,file='adf04standin')
