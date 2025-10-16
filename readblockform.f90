@@ -30,7 +30,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     logical :: check
     integer :: nread ,iostat ,checkint,coreint
     integer :: cf1,cf2
-    integer :: d1,d2
+    integer :: d1,d2,twoj
     integer, allocatable :: amICore(:),configMarker(:)
 
     !fixed iter - needs to be refactored
@@ -43,16 +43,16 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
 
     !ground of this n-l (or core) block
     real*8 :: thisground
-
+    
+    real*8 :: t1,t2 
 
 
     !initializations.
-    LVMAP = 0 
     numberContinuum= 0
     continuumIdex = 0
     continuumIdexprev=-1
     emptyChar = '          '
-
+    
     COREINT = 0 
     checkint = 0
     if (core) coreint = 1 
@@ -95,7 +95,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end if 
 
     !it is now time to read the configurations. 
-    print*,'I AM READING',nread,iostat
+    !print*,'I AM READING',nread,iostat
 
     allocate(amICore(nread),configMarker(nread))
     numblocks = numblocks + 1
@@ -126,6 +126,8 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     numresfound = 0 
 112  FORMAT(5I5,5X,1PE15.5,2(0PF15.6))
 
+    call cpu_time(t1)
+
     if (formatted) then 
         do ii = 1,max_iter 
             read(1,112,iostat=iostat) cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 
@@ -137,14 +139,13 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
             if (check.or.firstread) then
                 numresfound = numresfound + 1
                 if (numresfound .gt. numres) then 
+                    call extendReadInArrays
                     !put a dynamic reallocation here
-                    stop 'dimensions exceed - numres'
+                    !stop 'dimensions exceed - numres'
                 end if 
-                AAARRAY (numresfound)    = aa 
-                LV1ARRAY(numresfound)    = LV1 
-                LV2ARRAY(numresfound)    = LV2 
-                W_RES_STATE(numresfound) = w 
-                E_RES_STATE(numresfound) = ediff+e1
+                AAARRAY    (numresfound) = aa 
+                LV1ARRAY   (numresfound) = LV1 
+                LV2ARRAY   (numresfound) = LV2 
             end if 
         !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         end do 
@@ -161,19 +162,21 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
             if (check.or.firstread) then
                 numresfound = numresfound + 1
                 if (numresfound .gt. numres) then 
+                    call extendReadInArrays
                     !put a dynamic reallocation here
-                    stop 'dimensions exceed - numres'
+                    !stop 'dimensions exceed - numres'
                 end if 
                 AAARRAY (numresfound)    = aa 
                 LV1ARRAY(numresfound)    = LV1 
                 LV2ARRAY(numresfound)    = LV2 
-                W_RES_STATE(numresfound) = w 
-                E_RES_STATE(numresfound) = ediff+e1
             end if 
         !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         end do 
     end if 
 
+    call cpu_time(t2)
+
+    write(0, '("Resonance read time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
     !we only need the core from one block, so set it to false if we havent already.
     
@@ -208,12 +211,23 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     else
         read(1)
     end if 
+
+    allocate( lvmap(nlevels) )
+    allocate( E_RES_SORTED (nlevels) )
+    allocate( W_SORTED     (nlevels) )
+    E_RES_SORTED = 0.0D0 
+    W_SORTED = 0.0D0
+    LVMAP = 0 
+
+    call cpu_time(t1)
+
     if (formatted) then 
         do ii = 1,nlevels 
             contIndexChar = emptyChar
             kk = 0
-            read(1,123) lv,kk,kk,kk,kk,kk,ediff,kk
-            E_RES_STATE(lv) = ediff + thisground
+            read(1,123) lv,kk,kk,kk,twoj,kk,ediff,kk
+            E_RES_SORTED(lv) = ediff + thisground
+            W_SORTED(lv) = twoj + 1
             if (kk.ne.0) then 
                 continuumIdex = kk 
                 if (continuumIdex .ne. continuumIdexprev) then 
@@ -223,7 +237,6 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 if (continuumIdex .eq. 1) then 
                     groundOfCont = ediff 
                 end if 
-                energyNstates(continuumIdex) = ediff 
                 continuumIdexprev = continuumIdex
             end if 
         end do 
@@ -231,8 +244,9 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         do ii = 1,nlevels 
             contIndexChar = emptyChar
             kk = 0
-            read(1) lv,kk,kk,kk,kk,kk,ediff,kk
-            E_RES_STATE(lv) = ediff + thisground
+            read(1) lv,kk,kk,kk,twoj,kk,ediff,kk
+            E_RES_SORTED(lv) = ediff + thisground
+            W_SORTED(lv) = twoj + 1
             if (kk.ne.0) then 
                 continuumIdex = kk 
                 if (continuumIdex .ne. continuumIdexprev) then 
@@ -242,57 +256,57 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 if (continuumIdex .eq. 1) then 
                     groundOfCont = ediff 
                 end if 
-                energyNstates(continuumIdex) = ediff 
                 continuumIdexprev = continuumIdex
             end if 
         end do 
     end if 
 
+    call cpu_time(t2)
+    write(0, '("Level read time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+
     write(25,*) 'Ground of this cont is',groundOfCont
-    energyNstates = energyNstates - groundOfCont 
 
     allocate( AARATE_SORTED(nlevels,numberContinuum ))
-    allocate( E_RES_SORTED (nlevels) )
-    allocate( W_SORTED     (nlevels) )
+
 
     AARATE_SORTED = 0.0d0 
-    E_RES_SORTED = 0.0D0 
-    W_SORTED = 0.0D0
+
 
     !process the resonances into N+1 -> N rates 
     !keep track of the energies and statistical weights
+    call cpu_time(t1)
     do ii = 1,numresfound
         LV1 = LV1ARRAY(II)
         LV2 = LV2ARRAY(II)
         AARATE_SORTED(LV1,LVMAP(LV2)) = AARATE_SORTED(LV1,LVMAP(LV2))  + abs(AAARRAY(ii))
-        W_SORTED     (LV1) = W_RES_STATE(II)
     end do  
-    
+    call cpu_time(t2)
+    write(0, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+
     !tranfer these - order of these is fine 
-    E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
+    !E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
 
     !Calculate branching ratios. 
+    call cpu_time(t1)
     allocate(branching_ratio(nlevels,numberContinuum))
     branching_ratio = AARATE_SORTED 
     do jj = 1,nlevels 
         suma = sum( branching_ratio( jj , : ) )
         if(suma.gt.0)branching_ratio(jj,:)=branching_ratio(jj,:)/suma
     end do 
-
-    !do jj = 1,nlevels 
-    !    do ii = 1,numberContinuum 
-    !        if ( AARATE_SORTED(jj,ii) .gt. 1e-20) then 
-    !            print'(2I5,2F14.7,2ES11.2)', jj,ii,E_RES_SORTED(jj), energyNstates(ii),AARATE_SORTED(jj,ii),branching_ratio(jj,ii)
-    !        end if 
-    !    end do 
-    !end do 
+    call cpu_time(t2)
+    write(0, '("Branching ratio calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
     !Calculate upsilons - the whole reason I'm here.
+    call cpu_time(t1)
     if (.not. allocated(upsilon)) then 
         allocate( upsilon(ntemps , nlevels , nlevels ) )
         upsilon = 0.0d0 
     end if
     call resonantUpsilon
+    call cpu_time(t2)
+    write(0, '("Upsilon calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+
 
     !free stuff we don't need anymore - I should run this through 
     !valgrind and look for any leaks. 
@@ -301,6 +315,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     deallocate( branching_ratio)
     deallocate( W_SORTED     )
 
+    call cpu_time(t1)
     if (formatted) then 
         read(1,'(41X,A9)') dummy 
         print*,dummy
@@ -330,6 +345,10 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         end if 
         print*,'finished skipping radiative'
     end if 
+    call cpu_time(t2)
+    write(0, '("Radiative skip time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+
+    deallocate(lvmap)
 
 
     numberContinuumSave = numberContinuum

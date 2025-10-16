@@ -1,5 +1,13 @@
 module variables
     implicit none
+
+    !fixed arrays for read in 
+    integer :: numres = 1000000 
+    integer,allocatable :: LV1ARRAY(:)
+    integer,allocatable :: LV2ARRAY(:)
+    real*8 ,allocatable :: AAARRAY (:)
+    
+
     real*8,parameter :: RYDBERGCM= 109737.316
     integer :: numblocks = 0
 
@@ -15,12 +23,6 @@ module variables
 
     real*8             :: groundFromInput 
 
-    !fixed dimensions, to be cleaned up 
-    integer, parameter :: NUM_N1 = 1000 
-    integer, parameter :: NUM_N  = 1000 
-    integer, parameter :: NUM_C  = 20000 
-    integer, parameter :: numres = 2000000 
-!    integer, parameter :: nlevels = 210 
     integer :: nlevels
     integer, parameter :: ntemps = 13
     real*8             :: temps(ntemps)
@@ -30,29 +32,22 @@ module variables
     integer :: lv 
 
     !arrays for calculations 
+    
+    !for each block, all'd and free'd each time.
     real*8, allocatable :: AARATE_SORTED(:,:)
     real*8, allocatable :: E_RES_SORTED(:)
     real*8, allocatable :: W_SORTED(:)
-
-    integer :: mapCtoN(NUM_C,NUM_N)
-    integer :: LVMAP(NUM_C)
-    real*8  :: AARATE_CONT(NUM_C,NUM_N)
+    integer,allocatable :: LVMAP(:)
     real*8,allocatable  :: branching_ratio(:,:)
-
+    !used through all of runtime.
     real*8,allocatable  :: upsilon(:,:,:)
 
 
     character*4 :: char4
     integer :: offset
-    real*8  :: energyNstates(NUM_N)
     integer  :: numberContinuum,numberContinuumSave
 
-    !fixed arrays for read in 
-    integer :: LV1ARRAY(numres)
-    integer :: LV2ARRAY(numres)
-    real*8  :: AAARRAY (numres)
-    real*8 :: E_RES_STATE(numres)
-    real*8 :: W_RES_STATE(numres)
+
     real*8 :: suma
 
 
@@ -65,6 +60,49 @@ module variables
     character*10 :: contIndexChar,emptyChar
 
     real*8 :: groundOfCont
+
+    contains 
+
+    subroutine initReadInArrays 
+        implicit none 
+
+        allocate(LV1ARRAY(numres))
+        allocate(LV2ARRAY(numres))
+        allocate(AAARRAY (numres))
+
+    end subroutine 
+
+    subroutine deallocateReadInArrays 
+        implicit none 
+        deallocate(LV1ARRAY)
+        deallocate(LV2ARRAY)
+        deallocate(AAARRAY )
+    end subroutine
+
+    subroutine extendReadInArrays 
+        implicit none 
+        integer, allocatable :: lv1tmp(:)
+        integer, allocatable :: lv2tmp(:)
+        real*8,  allocatable :: aaatmp(:) 
+        integer :: oldNumRes 
+        oldNumRes = numres 
+        numres = numres + numres / 2 !extend the array by 50% 
+
+        allocate(lv1tmp(numres))
+        allocate(lv2tmp(numres))
+        allocate(aaatmp(numres))
+
+        lv1tmp(1:oldNumRes) = LV1ARRAY(:)
+        lv2tmp(1:oldNumRes) = LV2ARRAY(:)
+        aaatmp(1:oldNumRes) = AAARRAY (:)
+
+        call move_alloc(lv1tmp,LV1ARRAY)
+        call move_alloc(lv2tmp,LV2ARRAY)
+        call move_alloc(aaatmp,AAARRAY )
+
+        write(0,*) 'Successfully reallocated from ', oldNumRes,' to ',numres
+
+    end subroutine 
 
 
 

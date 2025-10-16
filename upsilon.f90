@@ -1,7 +1,9 @@
     subroutine resonantUpsilon( )
-        use variables, only:temps,E_RES_SORTED,energyNstates,AARATE_SORTED,branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,upsilon,energyFromInput,groundFromInput
+        use variables, only:temps,E_RES_SORTED,AARATE_SORTED,branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,upsilon,energyFromInput,groundFromInput
         !add contribution from this block to the upsilons. 
-
+        !this can absolutely be made better
+        !this code is incredibly ugly 
+        !i think the array accesses are probably quite slow 
         implicit none 
         real*8 :: sum 
         real*8 :: a,b,w
@@ -42,8 +44,6 @@
                     !write(25,*) 'Transition ',lower,' to ',upper
                     
                     do dd = 1, nlevels !number of lv numbers
-                        !energydiff = E_RES_SORTED(dd) - energyNstates(lower)
-                        !energydiff =  energydiff  - (energyNstates(upper) - energyNstates(lower))
                         energydiff = E_RES_SORTED(dd) - energyFromInput(upper) 
                         a = AARATE_SORTED  (dd,lower)
                         b = branching_ratio(dd,upper)
@@ -53,7 +53,7 @@
                             contribution = a * b * w * half * h_ryd * exp(- energydiff * oneOverT )* oneOverT
                             if ( ((lower.eq.1) .and. (upper.eq.3)) .and. (kk.eq.6)) then 
 
-                            write(25,'(3I5,4ES10.3,3ES13.6)') lower,upper,dd,a,b,w,energydiff,E_RES_SORTED(dd)-groundFromInput,energyFromInput(upper)-energyFromInput(1),energyNstates(1)
+                            write(25,'(3I5,4ES10.3,3ES13.6)') lower,upper,dd,a,b,w,energydiff,E_RES_SORTED(dd)-groundFromInput,energyFromInput(upper)-energyFromInput(1)
                             write(25,*) 'check ', oneOverT/13.606 , energydiff*13.606,h_ryd*13.606,contribution,nlevels 
                             if (contribution .gt. 1e-1) write(25,*) 'huh'
                             end if 

@@ -6,7 +6,6 @@ program main
 
     logical :: readCore ,firstread
     logical :: exists ,exists2
-    integer :: maxFiles = 10  
     integer :: fileiter
     character*2 :: oicFilesForm(9)
     data oicFilesForm/ 'o1','o2','o3','o4','o5','o6','o7','o8','o9' / 
@@ -14,7 +13,8 @@ program main
     data oicFilesUnForm/ 'o1u','o2u','o3u','o4u','o5u','o6u','o7u','o8u','o9u' / 
 
     call input
-    
+    call initReadInArrays
+
     readCore  = .true. 
     firstread = .true.
     open(90,file='corecounting')
@@ -96,7 +96,7 @@ program main
         end do 
     end do 
     write(30,'(2I5)') -1,-1
-    write(30,'(I5)') -1 
+    write(30, '(I5)') -1 
 
     close(30)
     close(25)
@@ -106,5 +106,7 @@ program main
     !    write(45,*) energyNstates(ii),energyFromInput(ii)-groundFromInput
     !end do 
     !close(45)
+    deallocate(upsilon)
+    call deallocateReadInArrays 
 
 end program
