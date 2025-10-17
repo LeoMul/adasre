@@ -39,38 +39,35 @@
                   ,1.80E+07 /) 
         
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
+        do dd = 1, nlevels !number of lv numbers
 
             do lower = 1,numberContinuum 
+                a = AARATE_SORTED  (dd,lower)
+
                 do upper = lower+1,numberContinuum
-                    sum = 0.0d0 
-                    !write(25,*) 'Transition ',lower,' to ',upper
-                    
-                    do dd = 1, nlevels !number of lv numbers
-                        energydiff = E_RES_SORTED(dd) - & 
-                                     energyFromInput(upper) 
-                        a = AARATE_SORTED  (dd,lower)
-                        b = branching_ratio(dd,upper)
-                        w = W_SORTED       (dd)
-                        if (energydiff .gt. 0.0d0) then 
-                         if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
-                                strength = a * b * w * h_ryd_on_2
-                                do kk = 1, ntemps 
-                                    oneOverT = 1./temps_ryd(kk)
 
-                                    tfac = exp(- energydiff * oneOverT )
-                                    tfac = tfac * oneOverT
+                    energydiff = E_RES_SORTED(dd) - & 
+                                 energyFromInput(upper) 
+                    b = branching_ratio(dd,upper)
+                    w = W_SORTED       (dd)
 
-                                    contribution = strength * tfac 
-                                    upsilon(kk,lower,upper) = &
-                                 upsilon(kk,lower,upper) + contribution
-                                end do
-                            end if
-                        end if 
-                    end do 
+                    if (energydiff .gt. 0.0d0) then 
+                     if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
+                            strength = a * b * w * h_ryd_on_2
+                            do kk = 1, ntemps 
+                                oneOverT = 1./temps_ryd(kk)
+                                tfac = exp(- energydiff * oneOverT )
+                                tfac = tfac * oneOverT
+                                contribution = strength * tfac 
+                                upsilon(kk,lower,upper) = &
+                             upsilon(kk,lower,upper) + contribution
+                            end do
+                        end if
+                    end if 
 
-                   ! upsilon(kk,lower,upper) = upsilon(kk,lower,upper) + sum 
                 end do 
             end do 
+        end do 
         
 
         !close(25)

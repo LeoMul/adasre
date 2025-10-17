@@ -4,7 +4,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     !Heavy reads are coded twice - once for form and once for unform.
     !This has better performance than checking the formatted logic every
     !time a record is read.
-    !This code is i/o limited - optimizations such as this matter.
+    !This code is i/o limited - optimizations such as this matter?
     !It however comes at the cost of some code needs to be edited in
     !more than one place. I personally can live with this, but the user
     !may find it useful to check any code they edit. 
@@ -12,9 +12,13 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     !this routine needs to be refactored into subroutines 
 
     !Current todo's here:
-    !1. dynamic memory reallocation for resonances read in
-    !2. some refactoring of the logic, i.e when do we include the core?
-
+    !1. some refactoring of the logic, i.e when do we include the core?
+    !2. possible writes to disk if memory becomes a problem...
+    !3. The oic file (might?) be arranged in order of autoionizing LV,
+    !   which could allow for on-the-fly calculation of branching ratio
+    !   except we need to know in advance what continuaa correspond to 
+    !   each lower lv - which we don't in general due to the ordering of
+    !   the blocks... 
     use variables
     use configs
     implicit none 
@@ -303,7 +307,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     !Calculate upsilons - the whole reason I'm here.
     call cpu_time(t1)
     if (.not. allocated(upsilon)) then 
-        allocate( upsilon(ntemps , nlevels , nlevels ) )
+        allocate( upsilon(ntemps , numberContinuum , numberContinuum ) )
         upsilon = 0.0d0 
     end if
     call resonantUpsilon
