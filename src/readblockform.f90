@@ -74,7 +74,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     !check we are not running off the end 
     if (IS_IOSTAT_END(iostat)) then 
         eof = .true. 
-        print*,' End of file detected, exiting this file. Iostat=',iostat
+        write(90,*)' End of file detected, exiting this file. Iostat=',iostat
         return 
     end if 
 
@@ -83,7 +83,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
 
     !Keep track of the number of blocks read for my records. 
     blknum = blknum + 1
-    print*,'Block ',blknum,'core = ',core
+    write(90,*)'Block ',blknum,'core = ',core
 
     !Initialize 
     princN = 0 
@@ -102,7 +102,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end if 
 
     !it is now time to read the configurations. 
-    !print*,'I AM READING',nread,iostat
+    !write(90,*)'I AM READING',nread,iostat
 
     allocate(amICore(nread),configMarker(nread))
     numblocks = numblocks + 1
@@ -183,7 +183,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
 
     call cpu_time(t2)
 
-    write(0, '("Resonance read time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Resonance read time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
     !we only need the core from one block, so set it to false if we havent already.
     
@@ -197,7 +197,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end if 
 
 
-    print*,'I have found ',numresfound, ' resonances.'
+    write(90,*)'I have found ',numresfound, ' resonances.'
 
 
 123  FORMAT(5X,6I5,F15.6,i10) 
@@ -210,7 +210,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         read(1,iostat=iostat) nlevels,thisground
     end if 
 
-    PRINT*,'nlevels,iostat=',NLEVELS,iostat,thisground
+    write(90,*)'nlevels,iostat=',NLEVELS,iostat,thisground
     if (iostat.lt.0) stop
     !skip the next line
     if (formatted) then 
@@ -269,7 +269,8 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end if 
 
     call cpu_time(t2)
-    write(0, '("Level read time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Level read time in block",I5,": ",F20.0," sec.")' ) & 
+    blknum, t2-t1
 
     write(25,*) 'Ground of this cont is',groundOfCont
 
@@ -289,7 +290,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         + abs(AAARRAY(ii))
     end do  
     call cpu_time(t2)
-    write(0, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
     write(26, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
     !tranfer these - order of these is fine 
@@ -304,7 +305,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         if(suma.gt.0)branching_ratio(jj,:)=branching_ratio(jj,:)/suma
     end do 
     call cpu_time(t2)
-    write(0, '("Branching ratio calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Branching ratio calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
     !Calculate upsilons - the whole reason I'm here.
     call cpu_time(t1)
@@ -317,7 +318,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end if
     call resonantUpsilon
     call cpu_time(t2)
-    write(0, '("Upsilon calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Upsilon calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
 
     !free stuff we don't need anymore - I should run this through 
@@ -330,7 +331,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     call cpu_time(t1)
     if (formatted) then 
         read(1,'(41X,A9)') dummy 
-        print*,dummy
+        write(90,*)dummy
         cf1 = 1 
         cf2 = 1
         if (dummy .eq. radIndicator) then 
@@ -341,11 +342,11 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 if (cf1.eq.0)  exit
             end do 
         end if 
-        print*,'finished skipping radiative'
+        write(90,*)'finished skipping radiative'
         113  FORMAT(6I5,1PE15.5,2(0PF15.6))
     else !we ar unformatted
         read(1) d1,d2 
-        !print*,dummy
+        !write(90,*)dummy
         cf1 = 1 
         cf2 = 1
         if (d1 .eq.nzed .and. d2.eq.nelec) then 
@@ -355,10 +356,10 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 if (cf1.eq.0)  exit
             end do 
         end if 
-        print*,'finished skipping radiative'
+        write(90,*)'finished skipping radiative'
     end if 
     call cpu_time(t2)
-    write(0, '("Radiative skip time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Radiative skip time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
     deallocate(lvmap)
 
