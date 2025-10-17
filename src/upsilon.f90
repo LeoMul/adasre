@@ -1,7 +1,7 @@
     subroutine resonantUpsilon( )
         use variables, only:temps,E_RES_SORTED,AARATE_SORTED,&
         branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,&
-        upsilon,energyFromInput
+        upsilon,energyFromInput,nmax
         !add contribution from this block to the upsilons. 
         !this can absolutely be made better
         !this code is incredibly ugly 
@@ -40,10 +40,10 @@
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
         do dd = 1, nlevels !number of lv numbers
 
-            do lower = 1,numberContinuum 
+            do lower = 1,nmax 
                 a = AARATE_SORTED  (dd,lower)
 
-                do upper = lower+1,numberContinuum
+                do upper = lower+1,nmax
 
                     energydiff = E_RES_SORTED(dd) - & 
                                  energyFromInput(upper) 

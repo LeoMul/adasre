@@ -9,6 +9,11 @@ subroutine input()
     integer     :: iii 
     logical     :: inputExists
     character*5 :: inputfile   = 'input'
+    namelist /adasre/ numtot,nmax,initresdim
+!   Initialize defaults 
+    numtot     = 0 
+    nmax       = 0
+    initresdim = 0  
 !   Check for the input
     inquire(file=inputfile,exist=inputExists)
 !
@@ -19,8 +24,15 @@ subroutine input()
     end if
 !   If it exists - read the file 
     open(50,file=inputfile)
-    read(50,*) ntar1 
+!   read namelist
+    read(50,adasre)
+!   Deal with defaults
+    if (numtot     .eq. 0) stop 'numtot = 0 - no input data'
+    if (nmax       .eq. 0) nmax       = numtot 
+    if (initresdim .eq. 0) initresdim = numresdefault
 !   All of the stuff from the LEVELS file.
+    ntar1 = numtot
+    numres = initresdim
     allocate(energyFromInput(ntar1))
     allocate(angJFromInput  (ntar1))
     allocate(angPFromInput  (ntar1))
@@ -39,6 +51,13 @@ subroutine input()
 !   Need this to correctly place the continuum energies with respect
 !   to the resonances
     read(50,'(20X,F18.8)') groundFromInput 
+!
+    if(groundFromInput.gt.0) then 
+        open (62,file='istop')
+        write(62,*)'invalid ground state of input energies'
+        close(62)
+        stop       'invalid ground state of input energies'
+    end if 
 !
     energyFromInput = energyFromInput + groundFromInput
 !

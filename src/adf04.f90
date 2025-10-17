@@ -39,8 +39,8 @@ subroutine adf04
     end do 
     write(30,'(1X)')
     
-    do ii = 1,numberContinuumSave 
-        do jj = ii+1,numberContinuumSave
+    do ii = 1,nmax 
+        do jj = ii+1,nmax
             !write(30,'(2I4,30ES10.2)') jj,ii,1E-30,upsilon(:,ii,jj),1e-30
             write(30,'(2I4,1X)',advance = 'no') jj,ii
             write(30,'(A7,1X)',advance = 'no') '1.00-30'

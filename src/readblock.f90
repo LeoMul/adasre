@@ -332,10 +332,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     !Calculate upsilons - the whole reason I'm here.
     call cpu_time(t1)
     if (.not. allocated(upsilon)) then 
-        allocate( upsilon(ntemps , numberContinuum , numberContinuum ) )
+        allocate( upsilon(ntemps , nmax , nmax ) )
         upsilon = 0.0d0 
-        write(26,*) 'allocated upsilon',ntemps , numberContinuum , & 
-        numberContinuum, ' = ', ntemps*numberContinuum*numberContinuum
+        write(26,*) 'allocated upsilon',ntemps , nmax , & 
+        nmax, ' = ', ntemps*nmax*nmax
         call flush(26)
     end if
     call resonantUpsilon
