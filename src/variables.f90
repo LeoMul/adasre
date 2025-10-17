@@ -85,7 +85,9 @@ module variables
         integer :: oldNumRes 
         oldNumRes = numres 
         numres = numres + numres / 2 !extend the array by 50% 
-
+        write(0 ,*) 'Attempting to realc from ', oldNumRes,' to ',numres
+        write(26,*) 'Attempting to realc from ', oldNumRes,' to ',numres
+        call flush(26)
         allocate(lv1tmp(numres))
         allocate(lv2tmp(numres))
         allocate(aaatmp(numres))
@@ -98,7 +100,11 @@ module variables
         call move_alloc(lv2tmp,LV2ARRAY)
         call move_alloc(aaatmp,AAARRAY )
 
-        write(0,*) 'Successfully reallocated from ', oldNumRes,' to ',numres
+        write(0 ,*) 'Successfully reallocated from ', oldNumRes,' to ',& 
+        numres
+        write(26,*) 'Successfully reallocated from ', oldNumRes,' to ',&
+        numres
+        call flush(26)
 
     end subroutine 
 

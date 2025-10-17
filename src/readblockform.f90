@@ -285,10 +285,12 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     do ii = 1,numresfound
         LV1 = LV1ARRAY(II)
         LV2 = LV2ARRAY(II)
-        AARATE_SORTED(LV1,LVMAP(LV2)) = AARATE_SORTED(LV1,LVMAP(LV2))  + abs(AAARRAY(ii))
+        AARATE_SORTED(LV1,LVMAP(LV2)) = AARATE_SORTED(LV1,LVMAP(LV2))  &
+        + abs(AAARRAY(ii))
     end do  
     call cpu_time(t2)
     write(0, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(26, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
 
     !tranfer these - order of these is fine 
     !E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
@@ -309,6 +311,9 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     if (.not. allocated(upsilon)) then 
         allocate( upsilon(ntemps , numberContinuum , numberContinuum ) )
         upsilon = 0.0d0 
+        write(26,*) 'allocated upsilon',ntemps , numberContinuum , & 
+        numberContinuum, ' = ', ntemps*numberContinuum*numberContinuum
+        call flush(26)
     end if
     call resonantUpsilon
     call cpu_time(t2)
