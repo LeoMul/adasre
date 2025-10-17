@@ -59,7 +59,7 @@ subroutine readoic(file,core,firstread,form)
             read(1)
         end if 
 
-        call readblockform(eof,core,blknum,form,firstread)
+        call readblock(eof,core,blknum,form,firstread)
     end do 
     print*,'finished with file ',file
     close(1)

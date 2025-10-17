@@ -7,7 +7,6 @@
         !this code is incredibly ugly 
         !i think the array accesses are probably quite slow 
         implicit none 
-        real*8 :: sum 
         real*8 :: a,b,w
 
         real*8,parameter :: boltz_si = 1.38e-23

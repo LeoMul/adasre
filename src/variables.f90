@@ -1,16 +1,14 @@
 module variables
+    !todo - get rid of some of these variables 
+    !and move them to local subroutine variables 
     implicit none
-
     !fixed arrays for read in 
     integer :: numres = 1000000 
     integer,allocatable :: LV1ARRAY(:)
     integer,allocatable :: LV2ARRAY(:)
     real*8 ,allocatable :: AAARRAY (:)
-    
-
     real*8,parameter :: RYDBERGCM= 109737.316
     integer :: numblocks = 0
-
     !input stuff
     integer            :: ntar1 
     integer            :: nzed,nelec
@@ -20,44 +18,36 @@ module variables
     integer,allocatable:: angPFromInput  (:)
     integer,allocatable:: angJFromInput  (:) !technically 2J
     integer,allocatable:: cfNumFromInput (:)
-
     real*8             :: groundFromInput 
 
-    integer :: nlevels
+    !Temperature Grid 
     integer, parameter :: ntemps = 13
     real*8             :: temps(ntemps)
+    !Upsilon.
+    real*8,allocatable  :: upsilon(:,:,:)
 
+    !Some tracking integers - should instead be local variables maybe.
     integer :: continuumIdex,continuumIdexprev
     integer :: lv 
+    integer :: nlevels
 
-    !arrays for calculations 
-    
+    !Arrays for storing the Auger rates in terms of the true bound 
+    !states indices.
     !for each block, all'd and free'd each time.
     real*8, allocatable :: AARATE_SORTED(:,:)
     real*8, allocatable :: E_RES_SORTED(:)
     real*8, allocatable :: W_SORTED(:)
     integer,allocatable :: LVMAP(:)
     real*8,allocatable  :: branching_ratio(:,:)
-    !used through all of runtime.
-    real*8,allocatable  :: upsilon(:,:,:)
-
 
     integer :: offset
     integer  :: numberContinuum,numberContinuumSave
-
-
     real*8 :: suma
 
-
-
-
     integer :: numresfound
-    integer :: cf,lv1,w,lv2
-    real*8  :: aa,ediff,e1
-    integer :: kk 
+
     character*10 :: contIndexChar,emptyChar
 
-    real*8 :: groundOfCont
 
     contains 
 
@@ -83,14 +73,23 @@ module variables
         integer, allocatable :: lv2tmp(:)
         real*8,  allocatable :: aaatmp(:) 
         integer :: oldNumRes 
+
+        integer :: stat1,stat2,stat3
+
         oldNumRes = numres 
         numres = numres + numres / 2 !extend the array by 50% 
         write(0 ,*) 'Attempting to realc from ', oldNumRes,' to ',numres
         write(26,*) 'Attempting to realc from ', oldNumRes,' to ',numres
         call flush(26)
-        allocate(lv1tmp(numres))
-        allocate(lv2tmp(numres))
-        allocate(aaatmp(numres))
+
+        allocate(lv1tmp(numres),stat = stat1)
+        if (stat1.gt.0) stop 'Error allocating lv1tmp for reallocation.'
+        
+        allocate(lv2tmp(numres),stat = stat2)
+        if (stat2.gt.0) stop 'Error allocating lv2tmp for reallocation.'
+
+        allocate(aaatmp(numres),stat = stat3)
+        if (stat3.gt.0) stop 'Error allocating aaatmp for reallocation.'
 
         lv1tmp(1:oldNumRes) = LV1ARRAY(:)
         lv2tmp(1:oldNumRes) = LV2ARRAY(:)

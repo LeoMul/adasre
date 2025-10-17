@@ -1,4 +1,4 @@
-subroutine readblockform(eof,core,blknum,formatted,firstread)
+subroutine readblock(eof,core,blknum,formatted,firstread)
     !lpm 16.10.25: 
     !This reads an oic file, formatted or unformatted.
     !Heavy reads are coded twice - once for form and once for unform.
@@ -46,13 +46,16 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     character*3 :: char3 
     
     !iters 
-    integer :: ii ,jj 
+    integer :: ii ,jj, kk 
 
     !ground of this n-l (or core) block
     real*8 :: thisground
     
     real*8 :: t1,t2 
-
+    !dummy reads
+    integer :: lv1,w,lv2
+    real*8  :: aa,ediff,e1
+    real*8 :: groundOfCont
 
     !initializations.
     numberContinuum= 0
@@ -72,12 +75,16 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end if  
     
     !check we are not running off the end 
+!110 FORMAT('("End of file detected, exiting this file. Iostat=",I5)')
+110 FORMAT ("End of file detected, exiting this file. Iostat=",I5)
+
     if (IS_IOSTAT_END(iostat)) then 
         eof = .true. 
-        write(90,*)' End of file detected, exiting this file. Iostat=',iostat
+        write(90,110) iostat
         return 
     end if 
-
+!    write(99, '("Resonance read time in block",I5,": ",F20.0," sec.")')&
+!                blknum, t2-t1
     !go back - it's rewind time 
     backspace(1)
 
@@ -91,37 +98,42 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
 
     !using iostat to catch an exception with doing too many reads
     !it would have been more stable had NRB told the oic file how many 
-    !orbitals are present - but this appears to work, at least on gnu, arm64.
+    !orbitals are present - but this appears to work, at least on gnu, 
+    !arm64. It also appears to work on gnu-fortran, perlmutter.
     !Time - and testing - will reveal if this needs to be coded better. 
     if (formatted) then 
-        read(1,'(A3,12X,I2,6X,I2,4X,100(I3,I2))',iostat=iostat) char3,nzed &
-                            ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
+       
+        read(1,'(A3,12X,I2,6X,I2,4X,100(I3,I2))',iostat=iostat) & 
+        char3,nzed ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
         read(char3,'(I3)') nread
     else 
-        read(1,iostat = iostat) nread, nzed ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
+        read(1,iostat = iostat) nread, nzed ,nelec, &
+                        (princN(ii),orbL(ii),ii=1,totalshelldim)
     end if 
-
     !it is now time to read the configurations. 
-    !write(90,*)'I AM READING',nread,iostat
-
     allocate(amICore(nread),configMarker(nread))
     numblocks = numblocks + 1
-
     !Get the configs.
     call decode_eissner(nread,formatted)
-
-    configMarker(1:nread) = NII(1:nread) !transfer the config markers.
-
-
+    !transfer the config markers.
+    configMarker(1:nread) = NII(1:nread) 
+    !Tell the code which CF's are core (non-Rydberg)
     amICore = 0 
     do ii = nread,1,-1 
+        !The CSF labels are arranged in the oic file in order of:
+        ! 1. Continuum     (NII>0)
+        ! 2. Rydberg       (NII<0)
+        ! 3. Correlation   (NII>0)
+        !So, loop backwards to get the correlation configurations.
         if (configMarker(ii) .gt. 0) then 
             amICore(ii) = 1 
         else
             exit 
         end if 
     end do 
-
+!For reasons I do not understand - there is an extra blank space
+!in the formatted file.
+!Although this could be wrong.
     if (formatted) then 
         read(1,*)
         read(1,*)
@@ -154,7 +166,8 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 LV1ARRAY   (numresfound) = LV1 
                 LV2ARRAY   (numresfound) = LV2 
             end if 
-        !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
+        !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w, &
+        !cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         end do 
     else !we are in an unformatted file. 
         do ii = 1,max_iter 
@@ -163,8 +176,8 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
             checkint = 0
             check = .false.
             check = XNOR( core , amICore(cf1).gt.0)
-            !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
-
+            !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1&
+            !,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
             if(check) checkint = 1
             if (check.or.firstread) then
                 numresfound = numresfound + 1
@@ -177,23 +190,28 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
                 LV1ARRAY(numresfound)    = LV1 
                 LV2ARRAY(numresfound)    = LV2 
             end if 
-        !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
+        !print'(6I5,5X,1PE15.5,2(0PF15.6),3I5)',numresfound,cf1,lv1,w,&
+        !cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         end do 
     end if 
 
     call cpu_time(t2)
 
-    write(99, '("Resonance read time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Resonance read time in block",I5,": ",F20.0," sec.")')&
+                blknum, t2-t1
 
-    !we only need the core from one block, so set it to false if we havent already.
+    !we only need the core from one block, so set it to false if we 
+    !havent already.
     
     if(core) then 
         core = .false. 
-        write(90,*) 'Setting core      to false. I have counted the core in this block.'
+        write(90,*) 'Setting core      to false. I have counted the &
+&       core in this block.'
     end if 
     if(firstread) then 
         firstread = .false. 
-        write(90,*) 'Setting firstread to false. I have counted the core in this block.'
+        write(90,*) 'Setting firstread to false. I have counted the &
+&       core in this block.'
     end if 
 
 
@@ -205,7 +223,8 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
 
     !read stuff
     if (formatted) then 
-        read(1,'(A10,I5,45X,F15.6)',iostat=iostat) dummy,nlevels,thisground
+        read(1,'(A10,I5,45X,F15.6)',iostat=iostat) &
+        dummy,nlevels,thisground
     else 
         read(1,iostat=iostat) nlevels,thisground
     end if 
@@ -290,8 +309,10 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         + abs(AAARRAY(ii))
     end do  
     call cpu_time(t2)
-    write(99, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
-    write(26, '("Resonance transfer time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Resonance transfer time in block",I5,": ",F20.0," &
+                                             &sec.")' ) blknum, t2-t1
+    write(26, '("Resonance transfer time in block",I5,": ",F20.0," &
+                                             &sec.")' ) blknum, t2-t1
 
     !tranfer these - order of these is fine 
     !E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
@@ -305,7 +326,8 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         if(suma.gt.0)branching_ratio(jj,:)=branching_ratio(jj,:)/suma
     end do 
     call cpu_time(t2)
-    write(99, '("Branching ratio calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Branching ratio calc time in block",I5,": ",F20.0," &
+                                           &sec.")' ) blknum, t2-t1
 
     !Calculate upsilons - the whole reason I'm here.
     call cpu_time(t1)
@@ -318,7 +340,8 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end if
     call resonantUpsilon
     call cpu_time(t2)
-    write(99, '("Upsilon calc time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Upsilon calc time in block",I5,": ",F20.0," sec.")' ) &
+                blknum, t2-t1
 
 
     !free stuff we don't need anymore - I should run this through 
@@ -338,7 +361,7 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
             READ(1,*)
             !skip radiative rates until we find something new
             do ii = 1,max_iter
-                read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2, w, aa ,ediff ,e1 
+                read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2,w,aa,ediff,e1 
                 if (cf1.eq.0)  exit
             end do 
         end if 
@@ -352,14 +375,15 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
         if (d1 .eq.nzed .and. d2.eq.nelec) then 
             !skip radiative rates until we find something new
             do ii = 1,max_iter
-                read(1,iostat=iostat)cf1,lv1,w,cf2,lv2, w, aa ,ediff ,e1 
+                read(1,iostat=iostat)cf1,lv1,w,cf2,lv2,w,aa,ediff,e1 
                 if (cf1.eq.0)  exit
             end do 
         end if 
         write(90,*)'finished skipping radiative'
     end if 
     call cpu_time(t2)
-    write(99, '("Radiative skip time in block",I5,": ",F20.0," sec.")' ) blknum, t2-t1
+    write(99, '("Radiative skip time in block",I5,": ",F20.0," sec.")')&
+            blknum, t2-t1
 
     deallocate(lvmap)
 
@@ -382,5 +406,5 @@ subroutine readblockform(eof,core,blknum,formatted,firstread)
     end function
 
 
-end subroutine readblockform
+end subroutine readblock
 

@@ -10,7 +10,7 @@ SRC= \
     src/initdeinit.f90\
     src/input.f90\
     src/readoic.f90\
-    src/readblockform.f90\
+    src/readblock.f90\
     src/adasre.f90\
     src/upsilon.f90 
 

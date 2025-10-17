@@ -50,8 +50,10 @@ module configs
     character*1 :: LLAB(0:11)
     character*1 :: OCCLAB(0:14)
     DATA LLAB/'S','P','D','F','G','H','I','K','L','M','N','O'/
-    DATA LIT /'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'/
-    DATA OCCLAB/'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E'/
+    DATA LIT /'0','1','2','3','4','5','6','7','8','9','A','B','C','D',&
+             'E','F'/
+    DATA OCCLAB/'0','1','2','3','4','5','6','7','8','9','A','B','C',& 
+    'D','E'/
     DATA ORBLAB /' 1S', &
                  ' 2S',' 2P',&
                  ' 3S',' 3P',' 3D',&
@@ -91,19 +93,19 @@ module configs
             !Here I simply check the formatted-ness of the file at every 
             !read. For the configurations we are only doing of order 
             !10 - 100 configurations, and I can live with that.
-            !Additionally, unlike the auger reads - this read is fairly nuanced.
-            !and i'd rather more maintainable code at the cost of an 
-            !immeasurably small performance cost.
+            !Additionally, unlike the Auger reads - this read is fairly 
+            !nuanced. and i'd rather more maintainable code at the cost 
+            !of an immeasurably small performance cost.
             if (formatted) then
-                !for a formatted file, life is easy, life can be dream,
-                !as the kids say. 
+            !for a formatted file, life is easy, life can be dream,
+            !as the kids say. 
                 READ(1,179,end=1002)NII(I),NGR,MA0,MB0,&
                                     (QS0(J),QL0(J),J=1,10)
             else 
-                !In unformatted, the Eissner notation is stored in 
-                !integer*4. This is precisely 3 more bytes than necessary.
-                !I need to read this in as a character*4 - and then 
-                !cast down to a character*1 which is what I actually need.
+            !In unformatted, the Eissner notation is stored in 
+            !integer*4. This is precisely 3 more bytes than necessary.
+            !I need to read this in as a character*4 - and then 
+            !cast down to a character*1 which is what I actually need.
                 READ(1,iostat=iostat,end=1002)NII(I),NGR,MA0,MB0,&
                                     (QS0(J),QL0TEMP(J),J=1,10)
                 do j = 1,10 
@@ -139,7 +141,7 @@ module configs
                 MXORBR=MAX(MXORBR,K)
                 IF(NII(I).LT.0)THEN
                   IF(IMATCH.eq.0.OR.IMATCH.EQ.-I) then 
-                    MXOCC(K)=MAX(M,MXOCC(K))                !so IMATCH.lT.0
+                    MXOCC(K)=MAX(M,MXOCC(K))             !so IMATCH.lT.0
                   END IF 
                 ELSE
                 QMB_CONT(I,J) = QMB(I,J)
@@ -165,7 +167,8 @@ module configs
             write(20,*) 'Debug Cont'
             write(20,*) 
             !write(20,*) QLB_CONT(I,1:LMX_CONT(i)),QSB_CONT(I,:)
-            write(20,*) (QLB_CONT(ncontium_cf,J),QSB_CONT(ncontium_cf,J),J=1,LMX_CONT(ncontium_cf)) 
+            write(20,*) (QLB_CONT(ncontium_cf,J), &
+                     QSB_CONT(ncontium_cf,J),J=1,LMX_CONT(ncontium_cf)) 
         end if 
 
 
@@ -185,10 +188,15 @@ module configs
 
         do i = 2, ncontium_cf 
             do j = 1 , ncontium_cf_UNIQUE 
-                check1 = compareTwoArraysCha(QSB_CONT(I,:),QSB_CONT_UNIQUE(J,:))
-                check2 = compareTwoArraysInt(QLB_CONT(I,:),QLB_CONT_UNIQUE(J,:))
+
+                check1 = compareTwoArraysCha(QSB_CONT(I,:),& 
+                                              QSB_CONT_UNIQUE(J,:))
+                check2 = compareTwoArraysInt(QLB_CONT(I,:),& 
+                                              QLB_CONT_UNIQUE(J,:))
+
                 if ( check1.AND.check2) THEN
-                    go to 1 !i know i know its a goto, but its actually readable ok
+                !i know i know its a goto, but its actually readable ok
+                    go to 1 
                 end if
             end do 
 
@@ -206,13 +214,17 @@ module configs
             write(20,*) QLB_CONT_UNIQUE(i,1:LMX_CONT_UNIQUE(I))
         end do 
         close(20)
+        
         return 
+
         1002 continue
         stop ' error, in reading configs in decode_eissner'
-
+        !I know, it's a go to. I inherited this one from NRB. 
     end subroutine
 
     function compareTwoArraysInt(A,B) 
+        !compares two arrays of integers 
+        !If they have index with not the same element, return false.
         logical :: compareTwoArraysInt 
         integer :: A(:),B(:)
         integer :: ii 
@@ -226,6 +238,8 @@ module configs
     end function
 
     function compareTwoArraysCha(A,B) 
+        !compares two arrays of characters*1's 
+        !If they have index with not the same element, return false.
         logical :: compareTwoArraysCha 
         character*1 :: A(:),B(:)
         integer :: ii 
