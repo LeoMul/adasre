@@ -31,7 +31,7 @@ module configs
     integer           :: mxocc(shelldim)
     integer           :: k,m,mlast
     integer           :: imatch,MXORBR,NLIT=60
-    CHARACTER*1       :: COR(5),LIT(0:15),LAB1
+    CHARACTER*1       :: COR(5),LIT(0:21),LAB1
     CHARACTER*3       :: ORBLAB(36)
     integer           :: i,J
 
@@ -50,8 +50,9 @@ module configs
     character*1 :: LLAB(0:11)
     character*1 :: OCCLAB(0:14)
     DATA LLAB/'S','P','D','F','G','H','I','K','L','M','N','O'/
-    DATA LIT /'0','1','2','3','4','5','6','7','8','9','A','B','C','D',&
-             'E','F'/
+    DATA LIT /'0','1','2','3','4','5','6','7','8','9', &
+              'A','B','C','D','E','F','G','H','I','J', &
+              'K','L'/
     DATA OCCLAB/'0','1','2','3','4','5','6','7','8','9','A','B','C',& 
     'D','E'/
     DATA ORBLAB /' 1S', &

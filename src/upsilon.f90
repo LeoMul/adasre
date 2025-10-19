@@ -1,6 +1,6 @@
     subroutine resonantUpsilon( )
         use variables, only:temps,E_RES_SORTED,AARATE_SORTED,&
-        branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,&
+        branching_ratio,nlevels,ntemps,W_SORTED,&
         upsilon,energyFromInput,nmax
         use omp_lib
         !add contribution from this block to the upsilons. 
