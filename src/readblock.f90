@@ -326,10 +326,14 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     call cpu_time(t1)
     allocate(branching_ratio(nlevels,numberContinuum))
     branching_ratio = AARATE_SORTED 
+    !$omp parallel shared(branching_ratio) private(suma,jj)
+    !$omp do 
     do jj = 1,nlevels 
         suma = sum( branching_ratio( jj , : ) )
         if(suma.gt.0)branching_ratio(jj,:)=branching_ratio(jj,:)/suma
     end do 
+    !$omp end do 
+    !$omp end parallel
     call cpu_time(t2)
     write(99, '("Branching ratio calc time in block",I5,": ",F20.2," &
                                            &sec.")' ) blknum, t2-t1
