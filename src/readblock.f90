@@ -323,9 +323,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     !E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
 
     !Calculate branching ratios. 
-    call cpu_time(t1)
+    !call cpu_time(t1)
     allocate(branching_ratio(nlevels,numberContinuum))
     branching_ratio = AARATE_SORTED 
+    t1 = omp_get_wtime()
     !$omp parallel shared(branching_ratio) private(suma,jj)
     !$omp do 
     do jj = 1,nlevels 
@@ -334,13 +335,14 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     end do 
     !$omp end do 
     !$omp end parallel
-    call cpu_time(t2)
+    !call cpu_time(t2)
+    t2 = omp_get_wtime()
     write(99, '("Branching ratio calc time in block",I5,": ",F20.2," &
                                            &sec.")' ) blknum, t2-t1
     print'(" Branching ratio calc time in block",I5,": ",F20.2," &
                                            &sec.")', blknum, t2-t1
     !Calculate upsilons - the whole reason I'm here.
-    call cpu_time(t1)
+    !call cpu_time(t1)
     t1 = omp_get_wtime()
     if (.not. allocated(upsilon)) then 
         allocate( upsilon(ntemps , nmax , nmax ) )
@@ -350,7 +352,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         call flush(26)
     end if
     call resonantUpsilon
-    call cpu_time(t2)
+    !call cpu_time(t2)
     t2 = omp_get_wtime()
     write(99, '("Upsilon calc time in block",I5,": ",F20.2," sec.")' ) &
                 blknum, t2-t1
