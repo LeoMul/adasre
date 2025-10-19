@@ -1,5 +1,5 @@
 module reference_data 
-
+      implicit none
       CHARACTER(LEN=2) ELEM(92)  
       DATA                                                             &            
       ELEM /'H ','He','Li','Be','B ','C ','N ','O ','F ','Ne','Na','Mh'&

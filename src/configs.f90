@@ -225,6 +225,7 @@ module configs
     function compareTwoArraysInt(A,B) 
         !compares two arrays of integers 
         !If they have index with not the same element, return false.
+        implicit none
         logical :: compareTwoArraysInt 
         integer :: A(:),B(:)
         integer :: ii 
@@ -240,6 +241,7 @@ module configs
     function compareTwoArraysCha(A,B) 
         !compares two arrays of characters*1's 
         !If they have index with not the same element, return false.
+        implicit none
         logical :: compareTwoArraysCha 
         character*1 :: A(:),B(:)
         integer :: ii 

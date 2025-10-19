@@ -21,6 +21,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     !   the blocks... 
     use variables
     use configs
+    use omp_lib
     implicit none 
     
     !input variables. 
@@ -336,6 +337,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
                                            &sec.")', blknum, t2-t1
     !Calculate upsilons - the whole reason I'm here.
     call cpu_time(t1)
+    t1 = omp_get_wtime()
     if (.not. allocated(upsilon)) then 
         allocate( upsilon(ntemps , nmax , nmax ) )
         upsilon = 0.0d0 
@@ -345,6 +347,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     end if
     call resonantUpsilon
     call cpu_time(t2)
+    t2 = omp_get_wtime()
     write(99, '("Upsilon calc time in block",I5,": ",F20.2," sec.")' ) &
                 blknum, t2-t1
     print '(" Upsilon calc time in block",I5,": ",F20.2," sec.")', &

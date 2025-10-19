@@ -2,7 +2,8 @@ subroutine adf04
     use variables 
     use configs
     use reference_data
-    integer     :: ii , jj 
+    implicit none
+    integer     :: ii , jj ,kk
     character*4 :: char4 
 
     open(30,file='adf04standin')
@@ -38,7 +39,7 @@ subroutine adf04
         write(30,'(A3,1X)',advance='no') char8(6:8)
     end do 
     write(30,'(1X)')
-    
+    print*,' i am using nmax = ',nmax
     do ii = 1,nmax 
         do jj = ii+1,nmax
             !write(30,'(2I4,30ES10.2)') jj,ii,1E-30,upsilon(:,ii,jj),1e-30

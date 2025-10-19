@@ -1,10 +1,13 @@
 subroutine readoic(file,core,firstread,form)
     use variables
+    implicit none
+
     character(len=*) :: file
     logical,intent(inout) :: core 
     logical,intent(inout) :: firstread
     logical :: eof
     logical :: form 
+    integer :: blknum 
 !
     eof = .false.
     if (form) then 

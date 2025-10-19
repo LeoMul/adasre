@@ -1,5 +1,5 @@
 FC=gfortran
-FFLAGSPROD  = -O3 
+FFLAGSPROD  = -O3 -fopenmp
 FFLAGSDEBUG = -g -fbacktrace -fcheck=all -Wall 
 
 SRC= \

@@ -30,6 +30,7 @@ subroutine input()
     if (numtot     .eq. 0) stop 'numtot = 0 - no input data'
     if (nmax       .eq. 0) nmax       = numtot 
     if (initresdim .eq. 0) initresdim = numresdefault
+    write(25,*) 'proceeding with ',numtot,nmax,initresdim
 !   All of the stuff from the LEVELS file.
     ntar1 = numtot
     numres = initresdim
