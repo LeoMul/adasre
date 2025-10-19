@@ -83,7 +83,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         write(90,110) iostat
         return 
     end if 
-!    write(99, '("Resonance read time in block",I5,": ",F20.0," sec.")')&
+!    write(99, '("Resonance read time in block",I5,": ",F20.2," sec.")')&
 !                blknum, t2-t1
     !go back - it's rewind time 
     backspace(1)
@@ -197,9 +197,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
 
     call cpu_time(t2)
 
-    write(99, '("Resonance read time in block",I5,": ",F20.0," sec.")')&
+    write(99, '(" Resonance read time in block",I5,": ",F20.2," sec.")')&
                 blknum, t2-t1
-
+    print '(" Resonance read time in block",I5,": ",F20.2," sec.")',&
+                blknum, t2-t1
     !we only need the core from one block, so set it to false if we 
     !havent already.
     
@@ -288,9 +289,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     end if 
 
     call cpu_time(t2)
-    write(99, '("Level read time in block",I5,": ",F20.0," sec.")' ) & 
+    write(99, '("Level read time in block",I5,": ",F20.2," sec.")' ) & 
     blknum, t2-t1
-
+    print '(" Level read time in block",I5,": ",F20.2," sec.")',  & 
+    blknum, t2-t1
     write(25,*) 'Ground of this cont is',groundOfCont
 
     allocate( AARATE_SORTED(nlevels,numberContinuum ))
@@ -309,10 +311,12 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         + abs(AAARRAY(ii))
     end do  
     call cpu_time(t2)
-    write(99, '("Resonance transfer time in block",I5,": ",F20.0," &
+    write(99, '("Resonance transfer time in block",I5,": ",F20.2," &
                                              &sec.")' ) blknum, t2-t1
-    write(26, '("Resonance transfer time in block",I5,": ",F20.0," &
+    write(26, '("Resonance transfer time in block",I5,": ",F20.2," &
                                              &sec.")' ) blknum, t2-t1
+    print'(" Resonance transfer time in block",I5,": ",F20.2," &
+                                             &sec.")', blknum, t2-t1                                
 
     !tranfer these - order of these is fine 
     !E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
@@ -326,9 +330,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         if(suma.gt.0)branching_ratio(jj,:)=branching_ratio(jj,:)/suma
     end do 
     call cpu_time(t2)
-    write(99, '("Branching ratio calc time in block",I5,": ",F20.0," &
+    write(99, '("Branching ratio calc time in block",I5,": ",F20.2," &
                                            &sec.")' ) blknum, t2-t1
-
+    print'(" Branching ratio calc time in block",I5,": ",F20.2," &
+                                           &sec.")', blknum, t2-t1
     !Calculate upsilons - the whole reason I'm here.
     call cpu_time(t1)
     if (.not. allocated(upsilon)) then 
@@ -340,9 +345,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     end if
     call resonantUpsilon
     call cpu_time(t2)
-    write(99, '("Upsilon calc time in block",I5,": ",F20.0," sec.")' ) &
+    write(99, '("Upsilon calc time in block",I5,": ",F20.2," sec.")' ) &
                 blknum, t2-t1
-
+    print '(" Upsilon calc time in block",I5,": ",F20.2," sec.")', &
+    & blknum, t2-t1
 
     !free stuff we don't need anymore - I should run this through 
     !valgrind and look for any leaks. 
@@ -382,7 +388,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         write(90,*)'finished skipping radiative'
     end if 
     call cpu_time(t2)
-    write(99, '("Radiative skip time in block",I5,": ",F20.0," sec.")')&
+    write(99, '("Radiative skip time in block",I5,": ",F20.2," sec.")')&
             blknum, t2-t1
 
     deallocate(lvmap)

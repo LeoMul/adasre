@@ -2,6 +2,7 @@
         use variables, only:temps,E_RES_SORTED,AARATE_SORTED,&
         branching_ratio,nlevels,ntemps,numberContinuum,W_SORTED,&
         upsilon,energyFromInput,nmax
+        use omp_lib
         !add contribution from this block to the upsilons. 
         !this can absolutely be made better
         !this code is incredibly ugly 
@@ -38,13 +39,14 @@
                   ,1.80E+07 /) 
         
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
+        !$omp parallel shared(upsilon) private(dd,lower,upper,a,b,strength,kk,energydiff,oneOverT,tfac,contribution)
+        !$omp do schedule(static) !!!
         do dd = 1, nlevels !number of lv numbers
 
             do lower = 1,nmax 
                 a = AARATE_SORTED  (dd,lower)
 
                 do upper = lower+1,nmax
-
                     energydiff = E_RES_SORTED(dd) - & 
                                  energyFromInput(upper) 
                     b = branching_ratio(dd,upper)
@@ -67,7 +69,8 @@
                 end do 
             end do 
         end do 
-        
+        !$OMP END DO
+        !$omp end parallel
 
         !close(25)
 
