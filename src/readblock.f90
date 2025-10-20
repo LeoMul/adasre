@@ -405,8 +405,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
 105 FORMAT("  Upsilon   calc time in block",I5,": ",F19.2," sec.")
 106 FORMAT("  Radiative skip time in block",I5,": ",F19.2," sec.")
 !
-201 FORMAT("  I have found ", I8," resonances.")
-202 FORMAT("  Searching for ",I8," levels.")
+201 FORMAT("  I have found  ",I12," resonances.")
+202 FORMAT("  Searching for ",I12," levels.")
 203 FORMAT(2X,"File: ",A3,", Block number: ",I5)
 !
 999 FORMAT("----------------------------------------------------------&
