@@ -22,7 +22,7 @@ subroutine adf04
     write(30,'(A2,"+",I2,I10,I10,f15.4,"(0Y)")') ELEM (nzed),          &
                                     NZED-nelec+1,NZED,NZED-nelec+2,0.0d0
 
-    do ii = 1, numberContinuumSave
+    do ii = 1, numtot
         write(30,'(I5,A19,"(",I1,")",A1,"(",F4.1,")",F21.4)')    II,   &
                                         cflabel(cfNumFromInput(ii)),   &
                                              abs(angSFromInput(ii)),   &

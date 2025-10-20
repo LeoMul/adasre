@@ -1,4 +1,4 @@
-subroutine readblock(eof,core,blknum,formatted,firstread)
+subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !lpm 16.10.25: 
     !This reads an oic file, formatted or unformatted.
     !Heavy reads are coded twice - once for form and once for unform.
@@ -30,7 +30,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     integer,intent(inout) :: blknum
     logical,intent(inout) :: core
     logical,intent(inout) :: firstread
-
+    character(len=*)      :: filename
     !Flags for reading 
     logical :: check
     integer :: nread ,iostat ,checkint,coreint
@@ -77,7 +77,6 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     
     !check we are not running off the end 
 !110 FORMAT('("End of file detected, exiting this file. Iostat=",I5)')
-110 FORMAT ("End of file detected, exiting this file. Iostat=",I5)
 
     if (IS_IOSTAT_END(iostat)) then 
         eof = .true. 
@@ -88,9 +87,11 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
 !                blknum, t2-t1
     !go back - it's rewind time 
     backspace(1)
-
+    write(99,999)
+    print 999
     !Keep track of the number of blocks read for my records. 
     blknum = blknum + 1
+    print 203, filename,blknum
     write(90,*)'Block ',blknum,'core = ',core
 
     !Initialize 
@@ -103,7 +104,6 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     !arm64. It also appears to work on gnu-fortran, perlmutter.
     !Time - and testing - will reveal if this needs to be coded better. 
     if (formatted) then 
-       
         read(1,'(A3,12X,I2,6X,I2,4X,100(I3,I2))',iostat=iostat) & 
         char3,nzed ,nelec,(princN(ii),orbL(ii),ii=1,totalshelldim)
         read(char3,'(I3)') nread
@@ -141,13 +141,13 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     else 
         read(1)
     end if 
-
+!
     AAARRAY =0.0d0
     numresfound = 0 
 112  FORMAT(5I5,5X,1PE15.5,2(0PF15.6))
-
+!
     call cpu_time(t1)
-
+!
     if (formatted) then 
         do ii = 1,max_iter 
             read(1,112,iostat=iostat) cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 
@@ -195,16 +195,21 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         !cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         end do 
     end if 
-
+!
     call cpu_time(t2)
-
-    write(99, '(" Resonance read time in block",I5,": ",F20.2," sec.")')&
-                blknum, t2-t1
-    print '(" Resonance read time in block",I5,": ",F20.2," sec.")',&
-                blknum, t2-t1
+!
+!   Writeout 
+    write(99,101) blknum, t2-t1
+    print 101,    blknum, t2-t1
+    write(99,201) numresfound
+    print 201,    numresfound
+!
+    call flush(99)
+!   Flush output as clusters are slow.
+    !
     !we only need the core from one block, so set it to false if we 
     !havent already.
-    
+!
     if(core) then 
         core = .false. 
         write(90,*) 'Setting core      to false. I have counted the &
@@ -215,14 +220,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         write(90,*) 'Setting firstread to false. I have counted the &
 &       core in this block.'
     end if 
-
-
-    write(90,*)'I have found ',numresfound, ' resonances.'
-
-
-123  FORMAT(5X,6I5,F15.6,i10) 
-
-
+!
+!
     !read stuff
     if (formatted) then 
         read(1,'(A10,I5,45X,F15.6)',iostat=iostat) &
@@ -230,8 +229,9 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     else 
         read(1,iostat=iostat) nlevels,thisground
     end if 
-
-    write(90,*)'nlevels,iostat=',NLEVELS,iostat,thisground
+!
+    !write(90,*)'nlevels,iostat=',NLEVELS,iostat,thisground
+    write(99,202) nlevels 
     if (iostat.lt.0) stop
     !skip the next line
     if (formatted) then 
@@ -239,16 +239,17 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     else
         read(1)
     end if 
-
+!
     allocate( lvmap(nlevels) )
     allocate( E_RES_SORTED (nlevels) )
     allocate( W_SORTED     (nlevels) )
     E_RES_SORTED = 0.0D0 
     W_SORTED = 0.0D0
     LVMAP = 0 
-
+!
     call cpu_time(t1)
-
+!
+123 FORMAT(5X,6I5,F15.6,i10) 
     if (formatted) then 
         do ii = 1,nlevels 
             contIndexChar = emptyChar
@@ -288,20 +289,14 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
             end if 
         end do 
     end if 
-
+!
     call cpu_time(t2)
-    write(99, '("Level read time in block",I5,": ",F20.2," sec.")' ) & 
-    blknum, t2-t1
-    print '(" Level read time in block",I5,": ",F20.2," sec.")',  & 
-    blknum, t2-t1
-    write(25,*) 'Ground of this cont is',groundOfCont
-
+    write(99,102) blknum, t2-t1
+    print 102,    blknum, t2-t1
+!
     allocate( AARATE_SORTED(nlevels,numberContinuum ))
-
-
     AARATE_SORTED = 0.0d0 
-
-
+!
     !process the resonances into N+1 -> N rates 
     !keep track of the energies and statistical weights
     call cpu_time(t1)
@@ -312,21 +307,18 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         + abs(AAARRAY(ii))
     end do  
     call cpu_time(t2)
-    write(99, '("Resonance transfer time in block",I5,": ",F20.2," &
-                                             &sec.")' ) blknum, t2-t1
-    write(26, '("Resonance transfer time in block",I5,": ",F20.2," &
-                                             &sec.")' ) blknum, t2-t1
-    print'(" Resonance transfer time in block",I5,": ",F20.2," &
-                                             &sec.")', blknum, t2-t1                                
-
+    write(99,103) blknum, t2-t1
+    print 103,    blknum, t2-t1    
+    call flush(99)                            
+!
     !tranfer these - order of these is fine 
     !E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
 
     !Calculate branching ratios. 
     !call cpu_time(t1)
+    t1 = omp_get_wtime()
     allocate(branching_ratio(nlevels,numberContinuum))
     branching_ratio = AARATE_SORTED 
-    t1 = omp_get_wtime()
     !$omp parallel shared(branching_ratio) private(suma,jj)
     !$omp do 
     do jj = 1,nlevels 
@@ -337,10 +329,9 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     !$omp end parallel
     !call cpu_time(t2)
     t2 = omp_get_wtime()
-    write(99, '("Branching ratio calc time in block",I5,": ",F20.2," &
-                                           &sec.")' ) blknum, t2-t1
-    print'(" Branching ratio calc time in block",I5,": ",F20.2," &
-                                           &sec.")', blknum, t2-t1
+    write(99,104) blknum, t2-t1
+    print 104,    blknum, t2-t1
+    call flush(99)
     !Calculate upsilons - the whole reason I'm here.
     !call cpu_time(t1)
     t1 = omp_get_wtime()
@@ -354,10 +345,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
     call resonantUpsilon
     !call cpu_time(t2)
     t2 = omp_get_wtime()
-    write(99, '("Upsilon calc time in block",I5,": ",F20.2," sec.")' ) &
-                blknum, t2-t1
-    print '(" Upsilon calc time in block",I5,": ",F20.2," sec.")', &
-    & blknum, t2-t1
+    write(99,105) blknum, t2-t1
+    print 105,    blknum, t2-t1
 
     !free stuff we don't need anymore - I should run this through 
     !valgrind and look for any leaks. 
@@ -397,16 +386,33 @@ subroutine readblock(eof,core,blknum,formatted,firstread)
         write(90,*)'finished skipping radiative'
     end if 
     call cpu_time(t2)
-    write(99, '("Radiative skip time in block",I5,": ",F20.2," sec.")')&
-            blknum, t2-t1
-
+    write(99, 106) blknum, t2-t1
+    write(99, 999)
+    print 999
+    call flush(99)
     deallocate(lvmap)
-
-
+!
     numberContinuumSave = numberContinuum
     !clean up after yourself.
     deallocate(amICore,configMarker)
-
+!
+    !write-out formats. 
+!
+101 FORMAT("  Resonance read time in block",I5,": ",F19.2," sec.")
+102 FORMAT("  Level     read time in block",I5,": ",F19.2," sec.")
+103 FORMAT("  Resonance tran time in block",I5,": ",F19.2," sec.")
+104 FORMAT("  Br.Ratio  calc time in block",I5,": ",F19.2," sec.")
+105 FORMAT("  Upsilon   calc time in block",I5,": ",F19.2," sec.")
+106 FORMAT("  Radiative skip time in block",I5,": ",F19.2," sec.")
+!
+201 FORMAT("  I have found ", I8," resonances.")
+202 FORMAT("  Searching for ",I8," levels.")
+203 FORMAT(2X,"File: ",A3,", Block number: ",I5)
+!
+999 FORMAT("----------------------------------------------------------&
+&---")
+110 FORMAT("End of file detected, exiting this file. Iostat=",I5)
+!
     contains 
     
     function XNOR(L1,L2) 

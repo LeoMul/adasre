@@ -25,7 +25,7 @@ subroutine readoic(file,core,firstread,form)
             read(1)
         end if 
 !
-        call readblock(eof,core,blknum,form,firstread)
+        call readblock(eof,core,blknum,form,firstread,file)
     end do 
     print*,'Finished with file ',file,'.'
 !
