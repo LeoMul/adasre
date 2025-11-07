@@ -8,12 +8,12 @@ subroutine postProcess
     character*3 :: oicFilesUnForm(9)
     data oicFilesUnForm/ 'o1u','o2u','o3u','o4u','o5u','o6u','o7u', &
     'o8u','o9u' /  
-    
+!    
     readCore  = .true. 
     firstread = .true.
-
+!
     do fileiter = 1,9
-
+!
         inquire(file=oicFilesForm(fileiter),exist=exists_form)
         if (exists_form) then 
 !           

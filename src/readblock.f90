@@ -22,6 +22,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     use variables
     use configs
     use omp_lib
+    use kinds
     implicit none 
     
     !input variables. 
@@ -31,15 +32,20 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     logical,intent(inout) :: core
     logical,intent(inout) :: firstread
     character(len=*)      :: filename
+
+    !Data to be read directluy from AS output:
+    integer(readInt) :: nread 
+    integer(readInt) :: cf1,cf2
+    integer(readInt) :: lv1,w,lv2
+    integer(readInt) :: ireadzero = 0
     !Flags for reading 
     logical :: check
-    integer :: nread ,iostat ,checkint,coreint
-    integer :: cf1,cf2
+    integer :: iostat ,checkint,coreint
     integer :: d1,d2,twoj
     integer, allocatable :: amICore(:),configMarker(:)
 
     !fixed iter - needs to be refactored
-    integer :: max_iter = 2**30
+
 
     !temporary character variables 
     character*9 :: dummy 
@@ -47,18 +53,22 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     character*3 :: char3 
     
     !iters 
-    integer :: ii ,jj, kk 
-
+    integer(resonantIter) :: itwo = 2 
+    integer(resonantIter) :: ii ,jj
+    integer(resonantIter) :: max_iter! = itwo**62 
+!
+!
+    integer(readInt)     :: kk 
     !ground of this n-l (or core) block
     real*8 :: thisground
     
     real*8 :: t1,t2 
     !dummy reads
-    integer :: lv1,w,lv2
     real*8  :: aa,ediff,e1
     real*8 :: groundOfCont
 
     !initializations.
+    max_iter = itwo**62
     numberContinuum= 0
     continuumIdex = 0
     continuumIdexprev=-1

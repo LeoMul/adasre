@@ -9,7 +9,7 @@
         !i think the array accesses are probably quite slow 
         implicit none 
         real*8 :: a,b,w
-
+        
         real*8,parameter :: boltz_si = 1.38e-23
         real*8,parameter :: electrostat = 1.6e-19 
         real*8,parameter :: ryd_ev = 13.605703976
@@ -19,6 +19,7 @@
         real*8,parameter :: h_ryd_on_2 = h_ryd * half
         real*8 :: energydiff
         real*8 :: temps_ryd(ntemps) 
+        real*8 :: oneOverTArray(ntemps) 
         real*8 :: oneOverT 
         real*8 :: contribution 
         real*8 :: tfac 
@@ -39,6 +40,8 @@
                   ,1.80E+07 /) 
         
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
+        oneOverTArray = 1./ temps_ryd 
+
         !$omp parallel shared(upsilon) private(dd,lower,upper,a,b,strength,kk,energydiff,oneOverT,tfac,contribution)
         !$omp do schedule(static) !!!
         do dd = 1, nlevels !number of lv numbers
@@ -54,14 +57,14 @@
 
                     if (energydiff .gt. 0.0d0) then 
                      if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
-                            strength = a * b * w * h_ryd_on_2
+                            strength = a * b * w !!* h_ryd_on_2 !move this multiplication down 
                             do kk = 1, ntemps 
-                                oneOverT = 1./temps_ryd(kk)
+                                oneOverT = oneOverTArray(kk)
                                 tfac = exp(- energydiff * oneOverT )
-                                tfac = tfac * oneOverT
+                                !tfac = tfac * oneOverT !move this multiplication down
                                 contribution = strength * tfac 
                                 upsilon(kk,lower,upper) = &
-                             upsilon(kk,lower,upper) + contribution
+                                upsilon(kk,lower,upper) + contribution
                             end do
                         end if
                     end if 
@@ -71,7 +74,12 @@
         end do 
         !$OMP END DO
         !$omp end parallel
-
+        
+        !do this multiplication here 
+        oneOverTArray = oneOverTArray * h_ryd_on_2 
+        do kk = 1, ntemps 
+            upsilon(kk,:,:) = upsilon(kk,:,:) * oneOverTArray(kk)
+        end do 
         !close(25)
 
     end subroutine

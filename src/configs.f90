@@ -1,4 +1,5 @@
 module configs 
+    use kinds
     implicit none 
     !LMX(I) IS THE NO OF DISTINCT OPEN-SHELL ORBITALS IN CONFIG I.
     !QSB(I,J) IS THE OCCUPATION NO OF ORBITAL J IN CONFIG I.
@@ -9,8 +10,8 @@ module configs
     integer,parameter :: cfdim         = 200
     integer,parameter :: totalshelldim = 40 
     character*19      :: cflabel(cfdim)
-    integer           :: princN(totalshelldim)
-    integer           :: orbL  (totalshelldim)
+    integer(readInt)  :: princN(totalshelldim)
+    integer(readInt)  :: orbL  (totalshelldim)
     integer           :: NII(cfdim)
     
     integer           :: QS0    (shelldim)
@@ -31,7 +32,7 @@ module configs
     integer           :: mxocc(shelldim)
     integer           :: k,m,mlast
     integer           :: imatch,MXORBR,NLIT=60
-    CHARACTER*1       :: COR(5),LIT(0:21),LAB1
+    CHARACTER*1       :: COR(5),LIT(0:29),LAB1
     CHARACTER*3       :: ORBLAB(36)
     integer           :: i,J
 
@@ -52,7 +53,7 @@ module configs
     DATA LLAB/'S','P','D','F','G','H','I','K','L','M','N','O'/
     DATA LIT /'0','1','2','3','4','5','6','7','8','9', &
               'A','B','C','D','E','F','G','H','I','J', &
-              'K','L'/
+              'K','L','M','N','O','P','Q','R','S','T'/
     DATA OCCLAB/'0','1','2','3','4','5','6','7','8','9','A','B','C',& 
     'D','E'/
     DATA ORBLAB /' 1S', &
@@ -77,7 +78,7 @@ module configs
         !it.
 
         implicit none 
-        integer           :: ncf 
+        integer(readInt)  :: ncf 
         integer           :: ncontium_cf
         integer           :: iostat
         logical           :: formatted 
@@ -104,7 +105,8 @@ module configs
                                     (QS0(J),QL0(J),J=1,10)
             else 
             !In unformatted, the Eissner notation is stored in 
-            !integer*4. This is precisely 3 more bytes than necessary.
+            !integer*4. What happens if the user compiled with -i8?
+            !This is precisely 3 more bytes than necessary.
             !I need to read this in as a character*4 - and then 
             !cast down to a character*1 which is what I actually need.
                 READ(1,iostat=iostat,end=1002)NII(I),NGR,MA0,MB0,&
