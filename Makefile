@@ -1,8 +1,9 @@
 FC=gfortran
-FFLAGSPROD  = -O3 -fopenmp
+FFLAGSPROD  = -O3 -fopenmp -fcheck=all -Wall
 FFLAGSDEBUG = -g -fbacktrace -fcheck=all -Wall 
 
 SRC= \
+    src/kinds.f90\
     src/reference_data.f90\
     src/variables.f90\
     src/configs.f90\

@@ -42,8 +42,8 @@
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
         oneOverTArray = 1./ temps_ryd 
 
-        !$omp parallel shared(upsilon) private(dd,lower,upper,a,b,strength,kk,energydiff,oneOverT,tfac,contribution)
-        !$omp do schedule(static) !!!
+        !!!$omp parallel shared(upsilon) private(dd,lower,upper,a,b,strength,kk,energydiff,oneOverT,tfac,contribution)
+        !!!$omp do schedule(static) !!!
         do dd = 1, nlevels !number of lv numbers
 
             do lower = 1,nmax 
@@ -57,12 +57,15 @@
 
                     if (energydiff .gt. 0.0d0) then 
                      if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
-                            strength = a * b * w !!* h_ryd_on_2 !move this multiplication down 
-                            do kk = 1, ntemps 
+                            strength = a * b * w * h_ryd_on_2 !move this multiplication down 
+                            do kk = 1, 1 
                                 oneOverT = oneOverTArray(kk)
                                 tfac = exp(- energydiff * oneOverT )
-                                !tfac = tfac * oneOverT !move this multiplication down
+                                tfac = tfac * oneOverT !move this multiplication down
                                 contribution = strength * tfac 
+                                if (lower == 1 .and. upper == 2) then
+                                write(123, '(4ES10.2,3I5)') strength,oneOverT,contribution,contribution*oneOverT,lower,upper,dd
+                                end if 
                                 upsilon(kk,lower,upper) = &
                                 upsilon(kk,lower,upper) + contribution
                             end do
@@ -72,14 +75,17 @@
                 end do 
             end do 
         end do 
-        !$OMP END DO
-        !$omp end parallel
+        !!!!$OMP END DO
+        !!!!$omp end parallel
         
-        !do this multiplication here 
-        oneOverTArray = oneOverTArray * h_ryd_on_2 
-        do kk = 1, ntemps 
-            upsilon(kk,:,:) = upsilon(kk,:,:) * oneOverTArray(kk)
-        end do 
+        !!!do this multiplication here 
+        !!oneOverTArray = oneOverTArray * h_ryd_on_2 
+        !!!do kk = 1, ntemps 
+        !!!    oneOverT = oneOverTArray(kk)
+        !!!    write(999,*) upsilon(kk,1,2),oneOverT,upsilon(kk,1,2)*oneOverT
+        !!!    upsilon(kk,1,2) = upsilon(kk,1,2) * oneOverT
+        !!!    write(999,)
+        !!!end do 
         !close(25)
 
     end subroutine
