@@ -25,25 +25,31 @@
         real*8 :: tfac 
         real*8 :: strength 
         integer :: lower,upper,dd,kk
-        temps = (/ 1.80E+03 &  
-                  ,4.50E+03 &  
-                  ,9.00E+03 &  
-                  ,1.80E+04 &  
-                  ,4.50E+04 &  
-                  ,9.00E+04 &  
-                  ,1.80E+05 &  
-                  ,4.50E+05 &  
-                  ,9.00E+05 &  
-                  ,1.80E+06 &  
-                  ,4.50E+06 &  
-                  ,9.00E+06 &  
-                  ,1.80E+07 /) 
+        temps = (/ 4.00E+01,&
+                   8.00E+01,&
+                   2.00E+02,&
+                   4.00E+02,&
+                   8.00E+02,&
+                   2.00E+03,&
+                   4.00E+03,&
+                   8.00E+03,&
+                   2.00E+04,&
+                   4.00E+04,&
+                   8.00E+04,&
+                   2.00E+05,&
+                   4.00E+05,&
+                   8.00E+05,&
+                   2.00E+06,&
+                   4.00E+06,&
+                   8.00E+06,&
+                   2.00E+07,&
+                   4.00E+07 /)
         
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
         oneOverTArray = 1./ temps_ryd 
 
-        !!!$omp parallel shared(upsilon) private(dd,lower,upper,a,b,strength,kk,energydiff,oneOverT,tfac,contribution)
-        !!!$omp do schedule(static) !!!
+        !$omp parallel shared(upsilon) private(dd,lower,upper,a,b,strength,kk,energydiff,oneOverT,tfac,contribution)
+        !$omp do schedule(static) !!!
         do dd = 1, nlevels !number of lv numbers
 
             do lower = 1,nmax 
@@ -58,7 +64,7 @@
                     if (energydiff .gt. 0.0d0) then 
                      if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
                             strength = a * b * w * h_ryd_on_2 !move this multiplication down 
-                            do kk = 1, 1 
+                            do kk = 1, ntemps 
                                 oneOverT = oneOverTArray(kk)
                                 tfac = exp(- energydiff * oneOverT )
                                 tfac = tfac * oneOverT !move this multiplication down
@@ -75,8 +81,8 @@
                 end do 
             end do 
         end do 
-        !!!!$OMP END DO
-        !!!!$omp end parallel
+        !$OMP END DO
+        !$omp end parallel
         
         !!!do this multiplication here 
         !!oneOverTArray = oneOverTArray * h_ryd_on_2 

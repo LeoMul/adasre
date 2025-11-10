@@ -14,17 +14,18 @@ SRC= \
     src/readoic.f90\
     src/readblock.f90\
     src/adasre.f90\
-    src/upsilon.f90 
+    src/upsilon.f90\
+    src/coredr.f90
 
 OBJ=${SRC:.f90=.o}
-PROGRAM = adasre
+PROGRAM = adasdr-hack
 PRG_OBJ = $(PROGRAM).o
 
 %.o: %.f90
 	$(FC) $(FFLAGSPROD) -c -o $@ $<
 
-adasre: $(OBJ)
+adasdr-hack: $(OBJ)
 	$(FC) $(FFLAGSPROD) -o $@ $(OBJ)
 
 clean:
-	rm *.o *.mod adasre src/*.o src/*.mod 
+	rm *.o *.mod adasdr-hack src/*.o src/*.mod 

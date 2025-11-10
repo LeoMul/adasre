@@ -8,8 +8,11 @@ module variables
     integer :: nmax
     
     !Temperature Grid 
-    integer, parameter :: ntemps = 13
+    integer, parameter :: ntemps = 19
     real*8             :: temps(ntemps)
+    real*8             :: grounddiff
+    real*8             :: thisground
+
     !fixed arrays for read in 
 !
     !Read in From AS
@@ -21,7 +24,8 @@ module variables
     integer(resonantIter) :: numresdefault =  1000000
     integer(resonantIter) :: numres 
     integer(resonantIter) :: numresfound
-!
+    integer(resonantIter) :: numrr
+ !
     integer,allocatable :: LV1ARRAY(:)
     integer,allocatable :: LV2ARRAY(:)
     real*8 ,allocatable :: AAARRAY (:)
@@ -31,6 +35,7 @@ module variables
     integer            :: ntar1 
 
     real*8, allocatable:: energyFromInput(:)
+    real*8:: oiccontinuumground
     integer,allocatable:: angSFromInput  (:)
     integer,allocatable:: angLFromInput  (:)
     integer,allocatable:: angPFromInput  (:)
@@ -40,6 +45,8 @@ module variables
 !
     !Upsilon.
     real*8,allocatable  :: upsilon(:,:,:)
+    real*8,allocatable  :: drrate(:,:)
+
 !
     !Some tracking integers - should instead be local variables maybe.
     integer :: continuumIdex,continuumIdexprev
@@ -49,10 +56,13 @@ module variables
     !states indices.
     !for each block, all'd and free'd each time.
     real*8, allocatable :: AARATE_SORTED(:,:)
+    real*8, allocatable :: ARRATE_SORTED(:,:)
     real*8, allocatable :: E_RES_SORTED(:)
     real*8, allocatable :: W_SORTED(:)
     integer,allocatable :: LVMAP(:)
     real*8,allocatable  :: branching_ratio(:,:)
+    real*8, allocatable :: drwidth(:)
+    real*8, allocatable :: oiccontinuum(:)
     integer :: offset
     integer  :: numberContinuum,numberContinuumSave
     real*8 :: suma
