@@ -25,25 +25,19 @@
         real*8 :: tfac 
         real*8 :: strength 
         integer :: lower,upper,dd,kk
-        temps = (/ 4.00E+01,&
-                   8.00E+01,&
-                   2.00E+02,&
-                   4.00E+02,&
-                   8.00E+02,&
-                   2.00E+03,&
-                   4.00E+03,&
-                   8.00E+03,&
-                   2.00E+04,&
-                   4.00E+04,&
-                   8.00E+04,&
-                   2.00E+05,&
-                   4.00E+05,&
-                   8.00E+05,&
-                   2.00E+06,&
-                   4.00E+06,&
-                   8.00E+06,&
-                   2.00E+07,&
-                   4.00E+07 /)
+        temps = (/ 1.80E+03 &  
+                  ,4.50E+03 &  
+                  ,9.00E+03 &  
+                  ,1.80E+04 &  
+                  ,4.50E+04 &  
+                  ,9.00E+04 &  
+                  ,1.80E+05 &  
+                  ,4.50E+05 &  
+                  ,9.00E+05 &  
+                  ,1.80E+06 &  
+                  ,4.50E+06 &  
+                  ,9.00E+06 &  
+                  ,1.80E+07 /) 
         
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev)
         oneOverTArray = 1./ temps_ryd 
@@ -69,9 +63,9 @@
                                 tfac = exp(- energydiff * oneOverT )
                                 tfac = tfac * oneOverT !move this multiplication down
                                 contribution = strength * tfac 
-                                if (lower == 1 .and. upper == 2) then
-                                write(123, '(4ES10.2,3I5)') strength,oneOverT,contribution,contribution*oneOverT,lower,upper,dd
-                                end if 
+                                !!if (lower == 1 .and. upper == 2) then
+                                !!write(123, '(4ES10.2,3I5)') strength,oneOverT,contribution,contribution*oneOverT,lower,upper,dd
+                                !!end if 
                                 upsilon(kk,lower,upper) = &
                                 upsilon(kk,lower,upper) + contribution
                             end do

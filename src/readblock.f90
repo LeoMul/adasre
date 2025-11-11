@@ -22,6 +22,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     use variables
     use configs
     use omp_lib
+    use kinds
     implicit none 
     
     !input variables. 
@@ -31,15 +32,20 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     logical,intent(inout) :: core
     logical,intent(inout) :: firstread
     character(len=*)      :: filename
+
+    !Data to be read directluy from AS output:
+    integer(readInt) :: nread 
+    integer(readInt) :: cf1,cf2
+    integer(readInt) :: lv1,w,lv2
+    integer(readInt) :: ireadzero = 0
     !Flags for reading 
     logical :: check
-    integer :: nread ,iostat ,checkint,coreint
-    integer :: cf1,cf2
+    integer :: iostat ,checkint,coreint
     integer :: d1,d2,twoj
     integer, allocatable :: amICore(:),configMarker(:)
 
     !fixed iter - needs to be refactored
-    integer*8 :: max_iter = int(2,8)**62 
+
 
     !temporary character variables 
     character*9 :: dummy 
@@ -47,22 +53,27 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     character*3 :: char3 
     
     !iters 
-    integer*8 :: ii ,jj, kk 
-
+    integer(resonantIter) :: itwo = 2 
+    integer(resonantIter) :: ii ,jj
+    integer(resonantIter) :: max_iter! = itwo**62 
+!
+!
+    integer(readInt)     :: kk 
     !ground of this n-l (or core) block
-    real*8 :: thisground
     
     real*8 :: t1,t2 
     !dummy reads
-    integer :: lv1,w,lv2
     real*8  :: aa,ediff,e1
     real*8 :: groundOfCont
+    real*8 :: arsum, aasum
 
     !initializations.
+    max_iter = itwo**62
     numberContinuum= 0
     continuumIdex = 0
     continuumIdexprev=-1
     emptyChar = '          '
+    oiccontinuumground = 0.0d0
     
     COREINT = 0 
     checkint = 0
@@ -151,7 +162,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     if (formatted) then 
         do ii = 1,max_iter 
             read(1,112,iostat=iostat) cf1,lv1,w,cf2,lv2 , aa ,ediff ,e1 
-            if (cf1.eq.0)  exit
+            if (cf1.eq.0) exit
             checkint = 0
             check = .false.
             check = XNOR( core , amICore(cf1).gt.0)
@@ -195,6 +206,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         !cf2,lv2 , aa ,ediff ,e1 , coreint,amICore(cf1),checkint
         end do 
     end if 
+!
+    oiccontinuumground = e1
 !
     call cpu_time(t2)
 !
@@ -348,14 +361,13 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     write(99,105) blknum, t2-t1
     print 105,    blknum, t2-t1
 
-    !free stuff we don't need anymore - I should run this through 
-    !valgrind and look for any leaks. 
-    deallocate( AARATE_SORTED)
-    deallocate( E_RES_SORTED )
-    deallocate( branching_ratio)
-    deallocate( W_SORTED     )
 
     call cpu_time(t1)
+!
+    !allocate(ARRATE_SORTED(nlevels,nlevels))
+    allocate(drwidth(nlevels))
+    drwidth = 0.0d0
+!
     if (formatted) then 
         read(1,'(41X,A9)') dummy 
         write(90,*)dummy
@@ -367,6 +379,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
             do ii = 1,max_iter
                 read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2,w,aa,ediff,e1 
                 if (cf1.eq.0)  exit
+                drwidth(lv1) = drwidth(lv1) + abs(aa)
+                numrr = numrr + 1 
             end do 
         end if 
         write(90,*)'finished skipping radiative'
@@ -381,12 +395,41 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
             do ii = 1,max_iter
                 read(1,iostat=iostat)cf1,lv1,w,cf2,lv2,w,aa,ediff,e1 
                 if (cf1.eq.0)  exit
+                !ARRATE_SORTED(lv1,lv2) = abs(aa)
+                drwidth(lv1) = drwidth(lv1) + abs(aa)
+                print*,drwidth(lv1)
+                numrr = numrr + 1 
             end do 
         end if 
         write(90,*)'finished skipping radiative'
     end if 
+!
     call cpu_time(t2)
     write(99, 106) blknum, t2-t1
+    !dr width 
+    t1 = omp_get_wtime()
+    !$omp parallel shared(drwidth) private(arsum,aasum,ii)
+    !$omp do 
+    do ii = 1, nlevels 
+        !might need to be more careful here...
+        aasum = sum( AARATE_SORTED(ii,:))
+        if(aasum>0.0d0) then 
+            print*,drwidth(ii)
+            drwidth(ii) = drwidth(ii)/(aasum+drwidth(ii))
+            
+    end if 
+    end do 
+    !$omp end do 
+    !$omp end parallel
+    t2 = omp_get_wtime()
+    print*,'time in rad width ',t2-t1
+    print*,'hello from lpm na,nr = ',numrr,numresfound
+    t1 = omp_get_wtime()
+    call coredr
+    t2 = omp_get_wtime()
+    print*,'time in core dr',t2-t1
+!
+
     write(99, 999)
     print 999
     call flush(99)
@@ -395,6 +438,12 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     numberContinuumSave = numberContinuum
     !clean up after yourself.
     deallocate(amICore,configMarker)
+    deallocate( AARATE_SORTED)
+    deallocate( E_RES_SORTED )
+    deallocate( branching_ratio)
+    deallocate( W_SORTED     )
+    !deallocate(ARRATE_SORTED)
+    deallocate(drwidth)
 !
     !write-out formats. 
 !

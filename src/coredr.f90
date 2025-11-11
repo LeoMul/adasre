@@ -1,6 +1,6 @@
     subroutine coredr( )
-        use variables, only:temps,E_RES_SORTED,AARATE_SORTED,&
-        drwidth,nlevels,ntemps,W_SORTED,oiccontinuumground,&
+        use variables, only:E_RES_SORTED,AARATE_SORTED,&
+        drwidth,nlevels,W_SORTED,oiccontinuumground,&
         drrate,energyFromInput,nmax,ARRATE_SORTED,angJFromInput,oiccontinuum,grounddiff,thisground,groundFromInput
         use omp_lib
         !add contribution from this block to the upsilons. 
@@ -18,6 +18,8 @@
         real*8,parameter :: half= 0.5e0
         real*8,parameter :: h_ryd_on_2 = h_ryd * half
         real*8 :: energydiff
+        integer,parameter::ntemps = 19 
+        real*8 :: temps (ntemps) 
         real*8 :: temp_ev (ntemps) 
         real*8 :: temps_ryd(ntemps) 
         real*8 :: oneOverTArray(ntemps) 
@@ -62,6 +64,8 @@
 !           EC(I)=T2-TCX                         !REMOVE CONT SHIFT FROM ALL
 !suspect line ^ 
 !
+        if (.not. allocated(drrate)) allocate(drrate(ntemps,1))
+
         temp_ev = temps * kb_ev
         temps_ryd = temps * boltz_si  / (electrostat* ryd_ev) 
         const = 4.0 * pi * bohr_cm2 * ry_ev
@@ -85,8 +89,8 @@
         !$omp parallel shared(drrate) private(contribution,energydiff,kk,ff,tt,w1,tfac,ee)
         !$omp do schedule(static) !!!
             do kk = 1, nlevels 
-                do ff = 1,nlevels 
-                    contribution = AARATE_SORTED(kk,ii) * ARRATE_SORTED(kk,ff) * drwidth(KK)
+                !do ff = 1,nlevels 
+                    contribution = AARATE_SORTED(kk,ii)  * drwidth(KK)
                     energydiff = E_RES_SORTED(kk) - energyFromInput(ii) - grounddiff
                     w1 = W_SORTED(kk) 
                     if (contribution>0 .and.energydiff>0) then 
@@ -100,7 +104,7 @@
                             !print*,tfac,contribution,constant(tt),drwidth(KK),ARRATE_SORTED(kk,ff),AARATE_SORTED(kk,ii)
                         end do 
                     end if 
-                end do 
+                !end do 
             end do 
 
         !end do 

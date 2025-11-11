@@ -1,18 +1,31 @@
 module variables
     !todo - get rid of some of these variables 
     !and move them to local subroutine variables 
+    use kinds
     implicit none
     !input variables
     integer :: numtot
     integer :: nmax
-    integer*8 :: initresdim 
+    
     !Temperature Grid 
     integer, parameter :: ntemps = 13
     real*8             :: temps(ntemps)
+    real*8             :: grounddiff
+    real*8             :: thisground
+
     !fixed arrays for read in 
-    integer*8           :: numresdefault =  1000000
-    integer*8           :: numres 
-    integer*8           :: numresfound
+!
+    !Read in From AS
+    integer(readInt)           :: nzed,nelec
+    integer(readInt)           :: lv 
+    integer(readInt)           :: nlevels
+    !Resonances
+    integer(resonantIter) :: initresdim 
+    integer(resonantIter) :: numresdefault =  1000000
+    integer(resonantIter) :: numres 
+    integer(resonantIter) :: numresfound
+    integer(resonantIter) :: numrr
+ !
     integer,allocatable :: LV1ARRAY(:)
     integer,allocatable :: LV2ARRAY(:)
     real*8 ,allocatable :: AAARRAY (:)
@@ -20,8 +33,9 @@ module variables
     integer :: numblocks = 0
     !input stuff
     integer            :: ntar1 
-    integer            :: nzed,nelec
+
     real*8, allocatable:: energyFromInput(:)
+    real*8:: oiccontinuumground
     integer,allocatable:: angSFromInput  (:)
     integer,allocatable:: angLFromInput  (:)
     integer,allocatable:: angPFromInput  (:)
@@ -31,20 +45,24 @@ module variables
 !
     !Upsilon.
     real*8,allocatable  :: upsilon(:,:,:)
+    real*8,allocatable  :: drrate(:,:)
+
 !
     !Some tracking integers - should instead be local variables maybe.
     integer :: continuumIdex,continuumIdexprev
-    integer :: lv 
-    integer :: nlevels
+
 !
     !Arrays for storing the Auger rates in terms of the true bound 
     !states indices.
     !for each block, all'd and free'd each time.
     real*8, allocatable :: AARATE_SORTED(:,:)
+    real*8, allocatable :: ARRATE_SORTED(:,:)
     real*8, allocatable :: E_RES_SORTED(:)
     real*8, allocatable :: W_SORTED(:)
     integer,allocatable :: LVMAP(:)
     real*8,allocatable  :: branching_ratio(:,:)
+    real*8, allocatable :: drwidth(:)
+    real*8, allocatable :: oiccontinuum(:)
     integer :: offset
     integer  :: numberContinuum,numberContinuumSave
     real*8 :: suma

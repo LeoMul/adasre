@@ -1,5 +1,5 @@
 FC=gfortran
-FFLAGSPROD  = -O3 -fopenmp 
+FFLAGSPROD  = -O3 -fopenmp
 FFLAGSDEBUG = -g -fbacktrace -fcheck=all -Wall 
 
 SRC= \
@@ -18,14 +18,14 @@ SRC= \
     src/coredr.f90
 
 OBJ=${SRC:.f90=.o}
-PROGRAM = adasdr-hack
+PROGRAM = adasre
 PRG_OBJ = $(PROGRAM).o
 
 %.o: %.f90
 	$(FC) $(FFLAGSPROD) -c -o $@ $<
 
-adasdr-hack: $(OBJ)
+adasre: $(OBJ)
 	$(FC) $(FFLAGSPROD) -o $@ $(OBJ)
 
 clean:
-	rm *.o *.mod adasdr-hack src/*.o src/*.mod 
+	rm *.o *.mod adasre src/*.o src/*.mod 
