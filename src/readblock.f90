@@ -397,7 +397,6 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
                 if (cf1.eq.0)  exit
                 !ARRATE_SORTED(lv1,lv2) = abs(aa)
                 drwidth(lv1) = drwidth(lv1) + abs(aa)
-                print*,drwidth(lv1)
                 numrr = numrr + 1 
             end do 
         end if 
@@ -414,10 +413,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         !might need to be more careful here...
         aasum = sum( AARATE_SORTED(ii,:))
         if(aasum>0.0d0) then 
-            print*,drwidth(ii)
             drwidth(ii) = drwidth(ii)/(aasum+drwidth(ii))
-            
-    end if 
+        end if 
     end do 
     !$omp end do 
     !$omp end parallel
