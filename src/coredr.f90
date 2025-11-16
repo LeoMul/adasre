@@ -1,6 +1,6 @@
     subroutine coredr( )
         use variables, only:E_RES_SORTED,AARATE_SORTED,&
-        drwidth,nlevels,W_SORTED,oiccontinuumground,&
+        drwidth,nlevels,W_SORTED,oiccontinuumground,drcounter,&
         drrate,energyFromInput,nmax,ARRATE_SORTED,angJFromInput,oiccontinuum,grounddiff,thisground,groundFromInput
         use omp_lib
         !add contribution from this block to the upsilons. 
@@ -37,6 +37,8 @@
         real*8 :: const
         real*8 :: check 
         integer :: ff ,ii,tt 
+        character*100 fn , filenumber
+        drcounter = drcounter + 1 
         temps = (/ 4.00E+01,&
                    8.00E+01,&
                    2.00E+02,&
@@ -111,7 +113,10 @@
 
         !$OMP END DO
         !$omp end parallel
-        open(7373,file='drcheck')
+        write(filenumber,'(I10)') drcounter
+        fn = 'drcheck' // adjustl(filenumber)
+        !write(fn,'(A7,I10)') 'drcheck',drcounter
+        open(7373,file=trim(fn))
         do ii = 1, ntemps 
             write(7373,*) temps(ii),drrate(ii,1)
         end do 

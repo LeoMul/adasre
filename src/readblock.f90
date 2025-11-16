@@ -63,7 +63,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     
     real*8 :: t1,t2 
     !dummy reads
-    real*8  :: aa,ediff,e1
+    real*8  :: aa,ediff,e1,ar
     real*8 :: groundOfCont
     real*8 :: arsum, aasum
 
@@ -377,9 +377,9 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
             READ(1,*)
             !skip radiative rates until we find something new
             do ii = 1,max_iter
-                read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2,w,aa,ediff,e1 
+                read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
                 if (cf1.eq.0)  exit
-                drwidth(lv1) = drwidth(lv1) + abs(aa)
+                drwidth(lv1) = drwidth(lv1) + abs(ar)
                 numrr = numrr + 1 
             end do 
         end if 
@@ -393,10 +393,9 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         if (d1 .eq.nzed .and. d2.eq.nelec) then 
             !skip radiative rates until we find something new
             do ii = 1,max_iter
-                read(1,iostat=iostat)cf1,lv1,w,cf2,lv2,w,aa,ediff,e1 
+                read(1,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
                 if (cf1.eq.0)  exit
-                !ARRATE_SORTED(lv1,lv2) = abs(aa)
-                drwidth(lv1) = drwidth(lv1) + abs(aa)
+                drwidth(lv1) = drwidth(lv1) + abs(ar)
                 numrr = numrr + 1 
             end do 
         end if 
@@ -405,6 +404,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
 !
     call cpu_time(t2)
     write(99, 106) blknum, t2-t1
+
+
     !dr width 
     t1 = omp_get_wtime()
     !$omp parallel shared(drwidth) private(arsum,aasum,ii)

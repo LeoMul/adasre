@@ -6,7 +6,7 @@ module variables
     !input variables
     integer :: numtot
     integer :: nmax
-    
+    integer :: drcounter = 0 
     !Temperature Grid 
     integer, parameter :: ntemps = 13
     real*8             :: temps(ntemps)
