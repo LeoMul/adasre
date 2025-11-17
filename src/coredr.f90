@@ -19,6 +19,12 @@
         real*8,parameter :: h_ryd_on_2 = h_ryd * half
         real*8 :: energydiff
         integer,parameter::ntemps = 19 
+        integer,parameter:: nbin = 10000 
+        real*8,parameter :: width = 0.01 !Ry 
+        real*8 :: sigma = width/2.355 
+        real*8 :: one_over_sigma
+        real*8 :: csa(nbin)
+        real*8 :: energies(nbin)
         real*8 :: temps (ntemps) 
         real*8 :: temp_ev (ntemps) 
         real*8 :: temps_ryd(ntemps) 
@@ -66,6 +72,10 @@
 !           EC(I)=T2-TCX                         !REMOVE CONT SHIFT FROM ALL
 !suspect line ^ 
 !
+
+        do ii = 1, nbin 
+            energies(ii) = (ii-1) * (2.0 /nbin) + 1e-6 
+        end do 
         if (.not. allocated(drrate)) allocate(drrate(ntemps,1))
 
         temp_ev = temps * kb_ev
@@ -92,14 +102,16 @@
         !$omp do schedule(static) !!!
             do kk = 1, nlevels 
                 !do ff = 1,nlevels 
-                    contribution = AARATE_SORTED(kk,ii)  * drwidth(KK)
+                    contribution = AARATE_SORTED(kk,ii)  * drwidth(KK) *w1/w2 
                     energydiff = E_RES_SORTED(kk) - energyFromInput(ii) - grounddiff
                     w1 = W_SORTED(kk) 
                     if (contribution>0 .and.energydiff>0) then 
                         !print '(3ES13.4,2F17.8)',energydiff,AARATE_SORTED(kk,ii),ARRATE_SORTED(kk,ff),groundFromInput-thisground,check
-
+                        csa = csa + contribution * (gaussian(energydiff)/energies)
+                        !print*,(gaussian(energydiff)/energies)  
+                        !stop
                         do tt =1 ,ntemps 
-                            tfac = constant(tt)*contribution*w1/w2
+                            tfac = constant(tt)*contribution
                             ee =  exp(-energydiff/temps_ryd(tt)) 
                             tfac = tfac *ee
                             drrate(tt,ii) = drrate(tt,ii) + tfac 
@@ -120,6 +132,11 @@
         do ii = 1, ntemps 
             write(7373,*) temps(ii),drrate(ii,1)
         end do 
+        close(7373) 
+        open(7373,file='cs'//trim(fn))
+        do ii = 1,nbin 
+            write(7373,*) energies(ii),csa(ii)
+        end do 
         close(7373)
         !!!do this multiplication here 
         !!oneOverTArray = oneOverTArray * h_ryd_on_2 
@@ -130,5 +147,16 @@
         !!!    write(999,)
         !!!end do 
         !close(25)
+
+        contains 
+
+        function gaussian(centre)
+            real*8 :: gaussian(nbin)
+            real*8 :: centre 
+            real*8 :: oneOverRoot2pi = 0.3989422804 
+            one_over_sigma = 1./sigma 
+            gaussian = (one_over_sigma * oneOverRoot2pi) * exp(-(energies - centre)**2 / (2.0 * sigma * sigma)  )
+
+        end function 
 
     end subroutine
