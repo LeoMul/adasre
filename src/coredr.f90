@@ -16,6 +16,7 @@
         real*8,parameter :: h_si  = 6.63e-34  
         real*8,parameter :: h_ryd = h_si / (electrostat* ryd_ev)
         real*8,parameter :: half= 0.5e0
+        real*8,parameter :: cs_const = 2.67e-14 !Mb Ry^2 s , adapted from S. Fritzche manual 
         real*8,parameter :: h_ryd_on_2 = h_ryd * half
         real*8 :: energydiff
         integer,parameter::ntemps = 19 
@@ -93,12 +94,12 @@
 !
         !!check = check/15
         grounddiff = oiccontinuumground-groundFromInput
-
+        csa =0.0d0 
 
         !do ii = 1, 1 
             ii=1
             w2 = angJFromInput(ii) + 1 
-        !$omp parallel shared(drrate) private(contribution,energydiff,kk,ff,tt,w1,tfac,ee)
+        !$omp parallel shared(drrate,csa,w2) private(contribution,energydiff,kk,ff,tt,w1,tfac,ee)
         !$omp do schedule(static) !!!
             do kk = 1, nlevels 
                 !do ff = 1,nlevels 
@@ -134,6 +135,7 @@
         end do 
         close(7373) 
         open(7373,file='cs'//trim(fn))
+        csa = csa * 0.5 * cs_const
         do ii = 1,nbin 
             write(7373,*) energies(ii),csa(ii)
         end do 
