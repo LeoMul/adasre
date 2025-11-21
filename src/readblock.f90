@@ -312,7 +312,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
 !
     !process the resonances into N+1 -> N rates 
     !keep track of the energies and statistical weights
-    call cpu_time(t1)
+    !call cpu_time(t1)
+    t1 = omp_get_wtime()
+    !$omp parallel shared(AARATE_SORTED,aasums) private(ii,lv1,lv2)
+    !$omp do 
     do ii = 1,numresfound
         LV1 = LV1ARRAY(II)
         LV2 = LV2ARRAY(II)
@@ -321,7 +324,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         + aa
         aasums(lv1) = aasums(lv1) + aa
     end do  
-    call cpu_time(t2)
+    !$omp end do 
+    !$omp end parallel
+    t2 = omp_get_wtime()
+    !call cpu_time(t2)
     write(99,103) blknum, t2-t1
     print 103,    blknum, t2-t1    
     call flush(99)                            
