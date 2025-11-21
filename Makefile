@@ -1,5 +1,5 @@
 FC=gfortran
-FFLAGSPROD  = -O3 -fopenmp
+FFLAGSPROD  = -O3 -fopenmp -fcheck=all
 FFLAGSDEBUG = -g -fbacktrace -fcheck=all -Wall 
 
 SRC= \
@@ -15,6 +15,7 @@ SRC= \
     src/readblock.f90\
     src/adasre.f90\
     src/upsilon.f90\
+    src/collstrength.f90\
     src/coredr.f90
 
 OBJ=${SRC:.f90=.o}

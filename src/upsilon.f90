@@ -9,7 +9,6 @@
         !i think the array accesses are probably quite slow 
         implicit none 
         real*8 :: a,b,w
-        
         real*8,parameter :: boltz_si = 1.38e-23
         real*8,parameter :: electrostat = 1.6e-19 
         real*8,parameter :: ryd_ev = 13.605703976

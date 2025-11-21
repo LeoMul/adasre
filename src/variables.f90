@@ -6,13 +6,36 @@ module variables
     !input variables
     integer :: numtot
     integer :: nmax
+    integer :: calcdr
+!
+    integer :: collstreng = 0 
+!
+    integer :: includerad
+!
     integer :: drcounter = 0 
+!
+!
+    ! Collision Strength Stuff 
+    integer,allocatable :: collstrenglower(:)
+    integer,allocatable :: collstrengupper(:)
+!
+    integer,parameter   :: collstrengnpoints_default = 10000
+    real*8, parameter   :: minERyd_default = 1E-5 
+    real*8, parameter   :: maxERyd_default = 5E+0 
+    integer             :: collstrengnpoints = collstrengnpoints_default
+    real*8              :: minERyd = minERyd_default  
+    real*8              :: maxERyd = maxERyd_default 
+    real*8,allocatable  :: energyGrid(:)
+    real*8              :: deltaERyd
+    real*8,allocatable  :: collstengthData(:,:)
+    real*8,allocatable  :: lorentzarray(:)
+!
     !Temperature Grid 
     integer, parameter :: ntemps = 13
     real*8             :: temps(ntemps)
     real*8             :: grounddiff
     real*8             :: thisground
-
+!
     !fixed arrays for read in 
 !
     !Read in From AS
@@ -29,6 +52,7 @@ module variables
     integer,allocatable :: LV1ARRAY(:)
     integer,allocatable :: LV2ARRAY(:)
     real*8 ,allocatable :: AAARRAY (:)
+    real*8 ,allocatable :: AASUMS  (:)
     real*8,parameter :: RYDBERGCM= 109737.316
     integer :: numblocks = 0
     !input stuff

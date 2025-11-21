@@ -58,4 +58,14 @@ subroutine adf04
 
     close(30)
 
+    if (collstreng > 0 ) then 
+        open(324324,file = 'colstrengthcheck')
+        write(324324,*) '#hello', shape(collstengthData)
+        do ii = 1, collstrengnpoints 
+            write(324324,*) energyGrid(ii), collstengthData(:,ii)
+        end do 
+        close(324324)
+    end if 
+
+
 end subroutine

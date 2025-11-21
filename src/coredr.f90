@@ -16,7 +16,7 @@
         real*8,parameter :: h_si  = 6.63e-34  
         real*8,parameter :: h_ryd = h_si / (electrostat* ryd_ev)
         real*8,parameter :: half= 0.5e0
-        real*8,parameter :: cs_const = 2.67e-14 !Mb Ry^2 s , adapted from S. Fritzche manual 
+        real*8,parameter :: cs_const = 2.65e-14 
         real*8,parameter :: h_ryd_on_2 = h_ryd * half
         real*8 :: energydiff
         integer,parameter::ntemps = 19 

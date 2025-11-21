@@ -6,14 +6,21 @@ subroutine input()
     !
     use variables
     implicit none 
+    integer     :: uu, ll 
     integer     :: iii 
     logical     :: inputExists
+    integer     :: iostat
     character*5 :: inputfile   = 'input'
-    namelist /adasre/ numtot,nmax,initresdim
-!   Initialize defaults 
+    namelist /adasre/ numtot,nmax,initresdim,calcdr,collstreng,minERyd, & 
+    maxERyd,collstrengnpoints
+!
+    !   Initialize defaults 
     numtot     = 0 
     nmax       = 0
     initresdim = 0  
+    calcdr     = 0 
+    includerad = 0 
+    collstreng = 0 
 !   Check for the input
     inquire(file=inputfile,exist=inputExists)
 !
@@ -62,6 +69,32 @@ subroutine input()
 !
     energyFromInput = energyFromInput + groundFromInput
 !
+    if (collstreng > 0) then 
+        allocate( collstrenglower(collstreng) )
+        allocate( collstrengupper(collstreng) )
+        do iii = 1, collstreng 
+            read(50, *,iostat=iostat) uu,ll 
+            if (iostat .ne. 0) then 
+                write(25,*) 'Unexpected end of requested OMEGAs '
+                write(99,*) 'Unexpected end of requested OMEGAs '
+                stop        'Unexpected end of requested OMEGAs '             
+            end if 
+            collstrengupper(iii) = max(uu,ll)
+            collstrenglower(iii) = min(uu,ll)
+        end do  
+
+        allocate( energyGrid(collstrengnpoints)) 
+        deltaERyd = ( maxERyd - minERyd )  / real(collstrengnpoints,8) 
+        energyGrid(1) = minERyd  
+        do iii = 2, collstrengnpoints
+            energyGrid(iii) = energyGrid(iii-1) + deltaERyd 
+        end do
+        allocate (collstengthData(collstreng,collstrengnpoints)) 
+        allocate (lorentzarray(collstrengnpoints))
+        collstengthData = 0.0d0 
+    end if 
+
+    !
     close (50)
  !   
 end subroutine input

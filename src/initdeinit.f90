@@ -11,8 +11,12 @@ end subroutine
 subroutine deinit
     use variables
     implicit none
-    if(allocated(upsilon)) deallocate(upsilon) 
     call deallocateReadInArrays 
+    if(allocated(upsilon))         deallocate(upsilon) 
+    if(allocated(drrate))          deallocate(drrate) 
+    if(allocated(collstengthData)) deallocate(collstengthData) 
+    if(allocated(energyGrid))      deallocate(energyGrid)
+    if(allocated(lorentzarray))    deallocate(lorentzarray)
     close(26) 
     close(25)
     close(90)

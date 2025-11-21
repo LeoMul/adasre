@@ -171,8 +171,6 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
                 numresfound = numresfound + 1
                 if (numresfound .gt. numres) then 
                     call extendReadInArrays
-                    !put a dynamic reallocation here
-                    !stop 'dimensions exceed - numres'
                 end if 
                 AAARRAY    (numresfound) = aa 
                 LV1ARRAY   (numresfound) = LV1 
@@ -308,6 +306,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     print 102,    blknum, t2-t1
 !
     allocate( AARATE_SORTED(nlevels,numberContinuum ))
+    allocate (aasums(nlevels))
+    aasums = 0.0d0 
     AARATE_SORTED = 0.0d0 
 !
     !process the resonances into N+1 -> N rates 
@@ -316,8 +316,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     do ii = 1,numresfound
         LV1 = LV1ARRAY(II)
         LV2 = LV2ARRAY(II)
-        AARATE_SORTED(LV1,LVMAP(LV2)) = AARATE_SORTED(LV1,LVMAP(LV2))  &
-        + abs(AAARRAY(ii))
+        aa = abs(AAARRAY(ii))
+        AARATE_SORTED(LV1,LVMAP(LV2)) = AARATE_SORTED(LV1,LVMAP(LV2)) &
+        + aa
+        aasums(lv1) = aasums(lv1) + aa
     end do  
     call cpu_time(t2)
     write(99,103) blknum, t2-t1
@@ -332,11 +334,15 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     t1 = omp_get_wtime()
     allocate(branching_ratio(nlevels,numberContinuum))
     branching_ratio = AARATE_SORTED 
-    !$omp parallel shared(branching_ratio) private(suma,jj)
+    !$omp parallel shared(branching_ratio) private(suma,jj,ii)
     !$omp do 
     do jj = 1,nlevels 
-        suma = sum( branching_ratio( jj , : ) )
-        if(suma.gt.0)branching_ratio(jj,:)=branching_ratio(jj,:)/suma
+        suma = aasums(jj)
+        if(suma.gt.0) then 
+            do ii  = 1, numberContinuum 
+                branching_ratio(jj,ii)=branching_ratio(jj,ii)/suma
+            end do 
+        end if 
     end do 
     !$omp end do 
     !$omp end parallel
@@ -356,6 +362,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         call flush(26)
     end if
     call resonantUpsilon
+    if (collstreng>0) call collstrength
     !call cpu_time(t2)
     t2 = omp_get_wtime()
     write(99,105) blknum, t2-t1
@@ -405,27 +412,29 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     call cpu_time(t2)
     write(99, 106) blknum, t2-t1
 
+    if (calcdr .ne. 0 ) then 
+        !dr width 
+        t1 = omp_get_wtime()
+        !$omp parallel shared(drwidth) private(arsum,aasum,ii)
+        !$omp do 
+        do ii = 1, nlevels 
+            !might need to be more careful here...
+            aasum = sum( AARATE_SORTED(ii,:))
+            if(aasum>0.0d0) then 
+                drwidth(ii) = drwidth(ii)/(aasum+drwidth(ii))
+            end if 
+        end do 
+        !$omp end do 
+        !$omp end parallel
 
-    !dr width 
-    t1 = omp_get_wtime()
-    !$omp parallel shared(drwidth) private(arsum,aasum,ii)
-    !$omp do 
-    do ii = 1, nlevels 
-        !might need to be more careful here...
-        aasum = sum( AARATE_SORTED(ii,:))
-        if(aasum>0.0d0) then 
-            drwidth(ii) = drwidth(ii)/(aasum+drwidth(ii))
-        end if 
-    end do 
-    !$omp end do 
-    !$omp end parallel
-    t2 = omp_get_wtime()
-    print*,'time in rad width ',t2-t1
-    print*,'hello from lpm na,nr = ',numrr,numresfound
-    t1 = omp_get_wtime()
-    call coredr
-    t2 = omp_get_wtime()
-    print*,'time in core dr',t2-t1
+        t2 = omp_get_wtime()
+        print*,'time in rad width ',t2-t1
+        print*,'hello from lpm na,nr = ',numrr,numresfound
+        t1 = omp_get_wtime()
+        call coredr
+        t2 = omp_get_wtime()
+        print*,'time in core dr',t2-t1
+    end if 
 !
 
     write(99, 999)
@@ -437,6 +446,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !clean up after yourself.
     deallocate(amICore,configMarker)
     deallocate( AARATE_SORTED)
+    deallocate( aasums)
     deallocate( E_RES_SORTED )
     deallocate( branching_ratio)
     deallocate( W_SORTED     )
@@ -473,6 +483,75 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         if ( (.not.l1) .and. (.not.l2) ) xnor = .True.
     end function
 
+
+    subroutine readRad 
+        if (formatted) then 
+            read(1,'(41X,A9)') dummy 
+            write(90,*)dummy
+            cf1 = 1 
+            cf2 = 1
+            if (dummy .eq. radIndicator) then 
+                READ(1,*)
+                !skip radiative rates until we find something new
+                do ii = 1,max_iter
+                    read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
+                    if (cf1.eq.0)  exit
+                    drwidth(lv1) = drwidth(lv1) + abs(ar)
+                    numrr = numrr + 1 
+                end do 
+            end if 
+            write(90,*)'finished reading radiative'
+            113  FORMAT(6I5,1PE15.5,2(0PF15.6))
+        else !we ar unformatted
+            read(1) d1,d2 
+            !write(90,*)dummy
+            cf1 = 1 
+            cf2 = 1
+            if (d1 .eq.nzed .and. d2.eq.nelec) then 
+                !skip radiative rates until we find something new
+                do ii = 1,max_iter
+                    read(1,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
+                    if (cf1.eq.0)  exit
+                    drwidth(lv1) = drwidth(lv1) + abs(ar)
+                    numrr = numrr + 1 
+                end do 
+            end if 
+            write(90,*)'finished reading radiative'
+        end if 
+    end subroutine readRad 
+
+
+    subroutine skipRad 
+        if (formatted) then 
+            read(1,'(41X,A9)') dummy 
+            write(90,*)dummy
+            cf1 = 1 
+            cf2 = 1
+            if (dummy .eq. radIndicator) then 
+                READ(1,*)
+                !skip radiative rates until we find something new
+                do ii = 1,max_iter
+                    read(1,113,iostat=iostat)cf1
+                    if (cf1.eq.0)  exit
+                end do 
+            end if 
+            write(90,*)'finished skipping radiative'
+            113  FORMAT(I5)
+        else !we ar unformatted
+            read(1) d1,d2 
+            !write(90,*)dummy
+            cf1 = 1 
+            cf2 = 1
+            if (d1 .eq.nzed .and. d2.eq.nelec) then 
+                !skip radiative rates until we find something new
+                do ii = 1,max_iter
+                    read(1,iostat=iostat)cf1
+                    if (cf1.eq.0)  exit
+                end do 
+            end if 
+            write(90,*)'finished skipping radiative'
+        end if 
+    end subroutine skipRad 
 
 end subroutine readblock
 
