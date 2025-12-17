@@ -7,6 +7,8 @@ module kinds
     use iso_fortran_env, only: resonantIter =>  int64
     use iso_fortran_env, only:    readFloat => real64
     use iso_fortran_env, only:    floatKind => real64
+    use iso_fortran_env, only:    largeIter =>  int64
+
     !
     !In autostructure, no matter the integer kind you have compiled it with.
     !The unformatted write-outs have integer values, say intval,

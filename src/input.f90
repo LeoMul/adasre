@@ -5,22 +5,25 @@ subroutine input()
     !{\sc autostructure} structure run.  
     !
     use variables
+    use tempgrid
     implicit none 
     integer     :: uu, ll 
     integer     :: iii 
     logical     :: inputExists
     integer     :: iostat
+    integer     :: temp 
     character*5 :: inputfile   = 'input'
     namelist /adasre/ numtot,nmax,initresdim,calcdr,collstreng,minERyd, & 
-    maxERyd,collstrengnpoints
+    maxERyd,collstrengnpoints, temp 
 !
     !   Initialize defaults 
-    numtot     = 0 
-    nmax       = 0
-    initresdim = 0  
-    calcdr     = 0 
-    includerad = 0 
-    collstreng = 0 
+    numtot     =  0 
+    nmax       =  0
+    initresdim =  0  
+    calcdr     =  0 
+    includerad =  0 
+    collstreng =  0 
+    temp       =  0
 !   Check for the input
     inquire(file=inputfile,exist=inputExists)
 !
@@ -34,9 +37,19 @@ subroutine input()
 !   read namelist
     read(50,adasre)
 !   Deal with defaults
-    if (numtot     .eq. 0) stop 'numtot = 0 - no input data'
-    if (nmax       .eq. 0) nmax       = numtot 
-    if (initresdim .eq. 0) initresdim = numresdefault
+    if (numtot     .eq.  0) stop 'numtot = 0 - no input data'
+    if (nmax       .eq.  0) nmax       = numtot 
+    if (initresdim .eq.  0) initresdim = numresdefault
+
+    ! temp grid 
+    if (temp == 0) then 
+        call defaulttempgrid 
+    else if (temp == -1) then
+        call knetempgrid
+    else 
+        call defaulttempgrid 
+    end if 
+    
     write(25,*) 'proceeding with ',numtot,nmax,initresdim
 !   All of the stuff from the LEVELS file.
     ntar1 = numtot

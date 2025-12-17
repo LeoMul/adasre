@@ -1,9 +1,11 @@
 FC=gfortran
-FFLAGSPROD  = -O3 -fopenmp -fcheck=all
+FFLAGSPROD  = -O3 -fopenmp 
 FFLAGSDEBUG = -g -fbacktrace -fcheck=all -Wall 
 
 SRC= \
     src/kinds.f90\
+    src/tempgrid.f90\
+    src/constants.f90\
     src/reference_data.f90\
     src/variables.f90\
     src/configs.f90\
@@ -29,4 +31,4 @@ adasre: $(OBJ)
 	$(FC) $(FFLAGSPROD) -o $@ $(OBJ)
 
 clean:
-	rm *.o *.mod adasre src/*.o src/*.mod 
+	rm *.o *.mod adasre src/*.o  

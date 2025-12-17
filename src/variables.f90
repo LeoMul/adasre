@@ -31,8 +31,8 @@ module variables
     real*8,allocatable  :: lorentzarray(:)
 !
     !Temperature Grid 
-    integer, parameter :: ntemps = 13
-    real*8             :: temps(ntemps)
+!    integer, parameter :: ntemps = 13
+!    real*8             :: temps(ntemps)
     real*8             :: grounddiff
     real*8             :: thisground
 !

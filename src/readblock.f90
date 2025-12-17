@@ -23,6 +23,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     use configs
     use omp_lib
     use kinds
+    use tempgrid
     implicit none 
     
     !input variables. 
@@ -37,7 +38,6 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     integer(readInt) :: nread 
     integer(readInt) :: cf1,cf2
     integer(readInt) :: lv1,w,lv2
-    integer(readInt) :: ireadzero = 0
     !Flags for reading 
     logical :: check
     integer :: iostat ,checkint,coreint

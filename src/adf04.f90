@@ -2,6 +2,7 @@ subroutine adf04
     use variables 
     use configs
     use reference_data
+    use tempgrid
     implicit none
     integer     :: ii , jj ,kk
     character*4 :: char4 
@@ -34,7 +35,7 @@ subroutine adf04
     write(30,'(I5)') -1 
     write(30,'(" 3.00    5       ")',advance='no')
     do ii = 1,ntemps 
-        write(char8,'(ES8.2)') temps(ii)
+        write(char8,'(ES8.2)') temps_kelvin(ii)
         write(30,'(A4)',advance='no')    char8(1:4)
         write(30,'(A3,1X)',advance='no') char8(6:8)
     end do 
