@@ -3,6 +3,10 @@ module variables
     !and move them to local subroutine variables 
     use kinds
     implicit none
+    !timinings:
+    real(8) :: wallclock1, wallclock2 
+
+
     !input variables
     integer :: numtot
     integer :: nmax
@@ -11,6 +15,7 @@ module variables
     integer :: collstreng = 0 
 !
     integer :: includerad
+    logical :: damp
 !
     integer :: drcounter = 0 
 !
@@ -38,6 +43,7 @@ module variables
 !
     !fixed arrays for read in 
 !
+    
     !Read in From AS
     integer(readInt)           :: nzed,nelec
     integer(readInt)           :: lv 

@@ -36,17 +36,23 @@ module tempgrid
            4.00E+02 &  
           ,6.00E+02 &  
           ,9.00E+02 &  
-          ,1.35E+04 &  
-          ,2.00E+04 &  
-          ,3.00E+04 &  
-          ,4.50E+04 &  
-          ,6.70E+04 &  
-          ,1.00E+05 & 
+          ,1.35E+03 &  
+          ,2.00E+03 &  
+          ,3.00E+03 &  
+          ,4.50E+03 &  
+          ,6.70E+03 &  
+          ,1.00E+04 & 
           /) 
-          temps_kelvin = temps_kelvin * (24 ** 3)
-        
+          temps_kelvin = temps_kelvin * (26 ** 3)
+    end subroutine
 
-
+    subroutine readtempgrid(temps)
+        integer :: temps 
+        integer :: ii 
+        if(allocated(temps_kelvin)) deallocate(temps_kelvin)
+        ntemps = temps
+        allocate(temps_kelvin(temps))
+        read(50,*) (temps_kelvin(ii),ii=1,ntemps)
     end subroutine
 
 end module tempgrid 

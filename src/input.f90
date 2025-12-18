@@ -13,8 +13,9 @@ subroutine input()
     integer     :: iostat
     integer     :: temp 
     character*5 :: inputfile   = 'input'
+    integer     :: idamp 
     namelist /adasre/ numtot,nmax,initresdim,calcdr,collstreng,minERyd, & 
-    maxERyd,collstrengnpoints, temp 
+    maxERyd,collstrengnpoints, temp,idamp
 !
     !   Initialize defaults 
     numtot     =  0 
@@ -24,6 +25,8 @@ subroutine input()
     includerad =  0 
     collstreng =  0 
     temp       =  0
+    idamp      =  0
+    damp = .false.
 !   Check for the input
     inquire(file=inputfile,exist=inputExists)
 !
@@ -40,14 +43,14 @@ subroutine input()
     if (numtot     .eq.  0) stop 'numtot = 0 - no input data'
     if (nmax       .eq.  0) nmax       = numtot 
     if (initresdim .eq.  0) initresdim = numresdefault
-
+    if (idamp      .NE.  0) damp = .true.
     ! temp grid 
     if (temp == 0) then 
         call defaulttempgrid 
     else if (temp == -1) then
         call knetempgrid
     else 
-        call defaulttempgrid 
+        call readtempgrid(temp) 
     end if 
     
     write(25,*) 'proceeding with ',numtot,nmax,initresdim

@@ -40,6 +40,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     integer(readInt) :: lv1,w,lv2
     !Flags for reading 
     logical :: check
+    logical :: radPresent 
     integer :: iostat ,checkint,coreint
     integer :: d1,d2,twoj
     integer, allocatable :: amICore(:),configMarker(:)
@@ -65,7 +66,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !dummy reads
     real*8  :: aa,ediff,e1,ar
     real*8 :: groundOfCont
-    real*8 :: arsum, aasum
+    real*8 :: aasum
 
     !initializations.
     max_iter = itwo**62
@@ -315,14 +316,15 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !call cpu_time(t1)
     t1 = omp_get_wtime()
     !$omp parallel shared(AARATE_SORTED,aasums) private(ii,lv1,lv2)
-    !$omp do 
+    !$omp do schedule(static)
     do ii = 1,numresfound
-        LV1 = LV1ARRAY(II)
-        LV2 = LV2ARRAY(II)
-        aa = abs(AAARRAY(ii))
-        AARATE_SORTED(LV1,LVMAP(LV2)) = AARATE_SORTED(LV1,LVMAP(LV2)) &
-        + aa
-        aasums(lv1) = aasums(lv1) + aa
+      LV1 = LV1ARRAY(II)
+      LV2 = LV2ARRAY(II)
+      aa = abs(AAARRAY(ii))
+      !!!$omp critical
+      AARATE_SORTED(LV1,LVMAP(LV2)) = aa + AARATE_SORTED(LV1,LVMAP(LV2))
+      aasums(lv1) = aasums(lv1) + aa
+      !!!$omp end critical
     end do  
     !$omp end do 
     !$omp end parallel
@@ -335,6 +337,65 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !tranfer these - order of these is fine 
     !E_RES_SORTED (1:NLEVELS) = E_RES_STATE(1:nlevels)
 
+    call cpu_time(t1)
+!
+    !allocate(ARRATE_SORTED(nlevels,nlevels))
+    allocate(drwidth(nlevels))
+    drwidth = 0.0d0
+!
+    radPresent = .false. 
+    if (formatted) then 
+        read(1,'(41X,A9)') dummy 
+        write(90,*)dummy
+        cf1 = 1 
+        cf2 = 1
+        if (dummy .eq. radIndicator) then 
+            radPresent = .True. 
+            READ(1,*)
+            !skip radiative rates until we find something new
+            do ii = 1,max_iter
+                read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
+                if (cf1.eq.0)  exit
+                drwidth(lv1) = drwidth(lv1) + abs(ar)
+                numrr = numrr + 1 
+            end do 
+        end if 
+        write(90,*)'finished skipping radiative'
+        113  FORMAT(6I5,1PE15.5,2(0PF15.6))
+    else !we ar unformatted
+        read(1) d1,d2 
+        !write(90,*)dummy
+        cf1 = 1 
+        cf2 = 1
+        if (d1 .eq.nzed .and. d2.eq.nelec) then 
+            radPresent = .True. 
+            !skip radiative rates until we find something new
+            do ii = 1,max_iter
+                read(1,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
+                if (cf1.eq.0)  exit
+                drwidth(lv1) = drwidth(lv1) + abs(ar)
+                numrr = numrr + 1 
+            end do 
+        end if 
+        write(90,*)'finished skipping radiative'
+    end if 
+!
+    call cpu_time(t2)
+    write(99, 106) blknum, t2-t1
+!
+
+
+    if (damp .and. radPresent ) then 
+    !$omp parallel shared(aasums) private(jj)
+    !$omp do
+        do jj = 1, nlevels 
+            aasums(jj) = aasums(jj) + drwidth(jj)
+        end do 
+    !$omp end do 
+    !$omp end parallel
+    end if 
+
+
     !Calculate branching ratios. 
     !call cpu_time(t1)
     t1 = omp_get_wtime()
@@ -343,7 +404,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !$omp parallel shared(branching_ratio) private(suma,jj,ii)
     !$omp do 
     do jj = 1,nlevels 
-        suma = aasums(jj)
+        suma = aasums(jj) !aasums(jj) + drwidth(jj)
         if(suma.gt.0) then 
             do ii  = 1, numberContinuum 
                 branching_ratio(jj,ii)=branching_ratio(jj,ii)/suma
@@ -357,6 +418,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     write(99,104) blknum, t2-t1
     print 104,    blknum, t2-t1
     call flush(99)
+
     !Calculate upsilons - the whole reason I'm here.
     !call cpu_time(t1)
     t1 = omp_get_wtime()
@@ -375,53 +437,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     print 105,    blknum, t2-t1
 
 
-    call cpu_time(t1)
-!
-    !allocate(ARRATE_SORTED(nlevels,nlevels))
-    allocate(drwidth(nlevels))
-    drwidth = 0.0d0
-!
-    if (formatted) then 
-        read(1,'(41X,A9)') dummy 
-        write(90,*)dummy
-        cf1 = 1 
-        cf2 = 1
-        if (dummy .eq. radIndicator) then 
-            READ(1,*)
-            !skip radiative rates until we find something new
-            do ii = 1,max_iter
-                read(1,113,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
-                if (cf1.eq.0)  exit
-                drwidth(lv1) = drwidth(lv1) + abs(ar)
-                numrr = numrr + 1 
-            end do 
-        end if 
-        write(90,*)'finished skipping radiative'
-        113  FORMAT(6I5,1PE15.5,2(0PF15.6))
-    else !we ar unformatted
-        read(1) d1,d2 
-        !write(90,*)dummy
-        cf1 = 1 
-        cf2 = 1
-        if (d1 .eq.nzed .and. d2.eq.nelec) then 
-            !skip radiative rates until we find something new
-            do ii = 1,max_iter
-                read(1,iostat=iostat)cf1,lv1,w,cf2,lv2,w,ar,ediff,e1 
-                if (cf1.eq.0)  exit
-                drwidth(lv1) = drwidth(lv1) + abs(ar)
-                numrr = numrr + 1 
-            end do 
-        end if 
-        write(90,*)'finished skipping radiative'
-    end if 
-!
-    call cpu_time(t2)
-    write(99, 106) blknum, t2-t1
-
     if (calcdr .ne. 0 ) then 
         !dr width 
         t1 = omp_get_wtime()
-        !$omp parallel shared(drwidth) private(arsum,aasum,ii)
+        !$omp parallel shared(drwidth) private(aasum,ii)
         !$omp do 
         do ii = 1, nlevels 
             !might need to be more careful here...
@@ -461,12 +480,12 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
 !
     !write-out formats. 
 !
-101 FORMAT("  Resonance read time in block",I5,": ",F19.2," sec.")
-102 FORMAT("  Level     read time in block",I5,": ",F19.2," sec.")
-103 FORMAT("  Resonance tran time in block",I5,": ",F19.2," sec.")
-104 FORMAT("  Br.Ratio  calc time in block",I5,": ",F19.2," sec.")
-105 FORMAT("  Upsilon   calc time in block",I5,": ",F19.2," sec.")
-106 FORMAT("  Radiative skip time in block",I5,": ",F19.2," sec.")
+101 FORMAT("  Resonance read      time in block",I5,": ",F19.2," sec.")
+102 FORMAT("  Level     read      time in block",I5,": ",F19.2," sec.")
+103 FORMAT("  Resonance transfer  time in block",I5,": ",F19.2," sec.")
+104 FORMAT("  Br.Ratio  calc      time in block",I5,": ",F19.2," sec.")
+105 FORMAT("  Upsilon   calc      time in block",I5,": ",F19.2," sec.")
+106 FORMAT("  Radiative skip/read time in block",I5,": ",F19.2," sec.")
 !
 201 FORMAT("  I have found  ",I12," resonances.")
 202 FORMAT("  Searching for ",I12," levels.")
