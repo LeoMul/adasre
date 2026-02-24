@@ -45,6 +45,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     integer :: d1,d2,twoj
     integer, allocatable :: amICore(:),configMarker(:)
 
+    integer, allocatable :: configPointer(:)
+
     !fixed iter - needs to be refactored
 
 
@@ -255,6 +257,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     allocate( lvmap(nlevels) )
     allocate( E_RES_SORTED (nlevels) )
     allocate( W_SORTED     (nlevels) )
+    allocate( configPointer(nlevels) )
     E_RES_SORTED = 0.0D0 
     W_SORTED = 0.0D0
     LVMAP = 0 
@@ -266,9 +269,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         do ii = 1,nlevels 
             contIndexChar = emptyChar
             kk = 0
-            read(1,123) lv,kk,kk,kk,twoj,kk,ediff,kk
+            read(1,123) lv,kk,kk,kk,twoj,cf1,ediff,kk
             E_RES_SORTED(lv) = ediff + thisground
             W_SORTED(lv) = twoj + 1
+            configPointer(lv) = cf1
             if (kk.ne.0) then 
                 continuumIdex = kk 
                 if (continuumIdex .ne. continuumIdexprev) then 
@@ -285,9 +289,11 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         do ii = 1,nlevels 
             contIndexChar = emptyChar
             kk = 0
-            read(1) lv,kk,kk,kk,twoj,kk,ediff,kk
+            read(1) lv,kk,kk,kk,twoj,cf1,ediff,kk
             E_RES_SORTED(lv) = ediff + thisground
             W_SORTED(lv) = twoj + 1
+            configPointer(lv) = cf1
+
             if (kk.ne.0) then 
                 continuumIdex = kk 
                 if (continuumIdex .ne. continuumIdexprev) then 
@@ -315,16 +321,16 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !keep track of the energies and statistical weights
     !call cpu_time(t1)
     t1 = omp_get_wtime()
-    !$omp parallel shared(AARATE_SORTED,aasums) private(ii,lv1,lv2)
+    !$omp parallel shared(AARATE_SORTED,aasums) private(ii,lv1,lv2,aa)
     !$omp do schedule(static)
     do ii = 1,numresfound
       LV1 = LV1ARRAY(II)
       LV2 = LV2ARRAY(II)
       aa = abs(AAARRAY(ii))
-      !!!$omp critical
+      !$omp atomic
       AARATE_SORTED(LV1,LVMAP(LV2)) = aa + AARATE_SORTED(LV1,LVMAP(LV2))
+      !$omp atomic
       aasums(lv1) = aasums(lv1) + aa
-      !!!$omp end critical
     end do  
     !$omp end do 
     !$omp end parallel
@@ -400,15 +406,19 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !call cpu_time(t1)
     t1 = omp_get_wtime()
     allocate(branching_ratio(nlevels,numberContinuum))
-    branching_ratio = AARATE_SORTED 
-    !$omp parallel shared(branching_ratio) private(suma,jj,ii)
+    !!!branching_ratio = AARATE_SORTED 
+    !$omp parallel shared(branching_ratio,AARATE_SORTED) private(suma,jj,ii)
     !$omp do 
     do jj = 1,nlevels 
         suma = aasums(jj) !aasums(jj) + drwidth(jj)
         if(suma.gt.0) then 
             do ii  = 1, numberContinuum 
-                branching_ratio(jj,ii)=branching_ratio(jj,ii)/suma
+                branching_ratio(jj,ii)=AARATE_SORTED(jj,ii)/suma
             end do 
+        else 
+            do ii = 1, numberContinuum
+                branching_ratio(jj,ii) = 0.0d0 
+            end do
         end if 
     end do 
     !$omp end do 
@@ -446,6 +456,8 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
             !might need to be more careful here...
             aasum = sum( AARATE_SORTED(ii,:))
             if(aasum>0.0d0) then 
+                !this is correct as aasum doesnt have the radiative rates in it
+                !but can be reused from elsewhere if damp is on for RE 
                 drwidth(ii) = drwidth(ii)/(aasum+drwidth(ii))
             end if 
         end do 
@@ -465,10 +477,12 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     write(99, 999)
     print 999
     call flush(99)
+    call writeout_aa(nlevels,E_RES_SORTED,configPointer,thisground,numberContinuum,AARATE_SORTED)
     deallocate(lvmap)
 !
     numberContinuumSave = numberContinuum
     !clean up after yourself.
+    deallocate(configPointer)
     deallocate(amICore,configMarker)
     deallocate( AARATE_SORTED)
     deallocate( aasums)

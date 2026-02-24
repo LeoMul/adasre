@@ -32,10 +32,10 @@
         temps_ryd = temps_kelvin * boltz_ryd
         oneOverTArray = 1./ temps_ryd 
 
-        !$omp parallel  private(dd,lower,upper,a,b,strength,kk,energydiff,oneOverT,tfac,contribution) REDUCTION(+:upsilon)
+        !$omp parallel  private(dd,lower,upper,a,b,w,strength,kk,energydiff,oneOverT,tfac,contribution) REDUCTION(+:upsilon)
         !$omp do schedule(static) !!!
         do dd = 1, nlevels !number of lv numbers
-!   
+!       
             w = W_SORTED(dd)
 
             do lower = 1,nmax 
@@ -46,21 +46,17 @@
                     energydiff = E_RES_SORTED(dd)-energyFromInput(upper)                                  
                     b = branching_ratio(dd,upper)
                     
-                    if (energydiff .gt. 0.0d0) then 
-                     if ( (a .gt. 0.0d0) .and. (b .gt. 0.0d0)) then
+                    if ( (energydiff .gt. 0.0d0) .and.  (a .gt. 0.0d0) .and. (b .gt. 0.0d0) ) then 
                             strength = a * b * w * h_ryd_on_2 
                             do kk = 1, ntemps 
                                 oneOverT = oneOverTArray(kk)
                                 tfac = exp(- energydiff * oneOverT )
                                 tfac = tfac * oneOverT 
                                 contribution = strength * tfac 
-                                !!!!$omp critical 
                                 upsilon(kk,lower,upper) = &
                                 upsilon(kk,lower,upper) + contribution
-                                !!!!$omp end critical
                             end do
-                        end if
-                    end if 
+                    end if
 
                 end do 
             end do 

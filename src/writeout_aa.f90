@@ -1,28 +1,42 @@
-subroutine writeout_aa(nlevels,ncont,eres,aa,branching_ratio,blknum,&
-    cftracker) 
+subroutine writeout_aa(nlev,eres,configPointer,tg,ntcont,aa) 
+    use variables
+    use configs
+    !todo, have it mark which Rydberg series each resonance comes from. 
+    !Core marked zero, perhaps. 
     implicit none 
-    integer :: nlevels, ncont 
-    real*8  :: eres(nlevels)
-    real*8  :: branching_ratio(nlevels,ncont)
-    real*8  :: aa(nlevels,ncont) 
-    integer :: blknum 
-    integer :: cftracker(nlevels)
+    integer :: nlev,ntcont
+    real*8  :: aa(nlevels,ntcont)
+    real*8  :: eres(nlevels),tg
+    integer :: configPointer(nlevels)
+   ! real*8  :: branching_ratio(nlevels,ncont)
+   ! real*8  :: aa(nlevels,ncont) 
     integer :: ii ,jj 
-    character*4 :: filename 
-
-    write(filename,'(A3,I1)') 'res',blknum
-
-    open(64,file=filename)
-
-    do ii = 1, nlevels 
-        do jj = 1 ,ncont 
-            if (aa(ii,jj) > 0.0d0)then 
-            write(64,'(3I5,f15.8,2ES10.2)') cftracker(ii),ii,jj, eres(ii), aa(ii,jj),branching_ratio(ii,jj)
-            end if 
+    character*4 :: char4 
+    rydbergLabel = ''
+    do ii = 1, ncontium_cf_UNIQUE 
+        offset = 0 
+        do jj =1 , LMX_CONT_UNIQUE(ii)
+            write(char4,'(I2,A,A)') princN(qlb(ii,jj)),&
+                                              LLAB  (orbl(qlb(ii,jj))),&
+                                              QSB(ii,jj)
+            rydbergLabel(ii)(1+offset:4+offset) = char4
+            offset = offset + 4 
         end do 
+        write(char4,'(A2,A,A)') ' N','L','1'
+        rydbergLabel(ii)(1+offset:4+offset) = char4
     end do 
 
-    close(64)
+    !write(64,*) blknum
+    !write(0,*) 'i am in writeout_aa',blknum
+
+
+
+    do ii = 1, nlev 
+        if ( (configPointer(ii) > 0) .and. (configPointer(ii) .le. ncontium_cf_UNIQUE)) then 
+            write(64,'(f15.8,a,es15.8,a,a23,a,i6)') eres(ii) - groundFromInput ,',',aa(ii,1) ,',',rydbergLabel(configPointer(ii)) ,',',configPointer(ii)
+        end if
+    end do 
+
 end subroutine  
 
 

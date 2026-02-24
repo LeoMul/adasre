@@ -9,6 +9,8 @@ module configs
     integer,parameter :: cfdim         = 200
     integer,parameter :: totalshelldim = 40 
     character*19      :: cflabel(cfdim)
+    character*23      :: rydbergLabel(cfdim)
+
     integer           :: princN(totalshelldim)
     integer           :: orbL  (totalshelldim)
     integer           :: NII(cfdim)

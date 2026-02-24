@@ -16,6 +16,7 @@ module variables
 !
     integer :: includerad
     logical :: damp
+    logical :: printRes = .false.
 !
     integer :: drcounter = 0 
 !

@@ -14,8 +14,9 @@ subroutine input()
     integer     :: temp 
     character*5 :: inputfile   = 'input'
     integer     :: idamp 
+    integer     :: ires 
     namelist /adasre/ numtot,nmax,initresdim,calcdr,collstreng,minERyd, & 
-    maxERyd,collstrengnpoints, temp,idamp
+    maxERyd,collstrengnpoints, temp,idamp,ires 
 !
     !   Initialize defaults 
     numtot     =  0 
@@ -26,6 +27,8 @@ subroutine input()
     collstreng =  0 
     temp       =  0
     idamp      =  0
+    ires       =  0
+
     damp = .false.
 !   Check for the input
     inquire(file=inputfile,exist=inputExists)
@@ -44,6 +47,7 @@ subroutine input()
     if (nmax       .eq.  0) nmax       = numtot 
     if (initresdim .eq.  0) initresdim = numresdefault
     if (idamp      .NE.  0) damp = .true.
+    if (ires        .ne.  0) printRes = .true.
     ! temp grid 
     if (temp == 0) then 
         call defaulttempgrid 
