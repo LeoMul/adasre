@@ -450,12 +450,12 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     if (calcdr .ne. 0 ) then 
         !dr width 
         t1 = omp_get_wtime()
-        !$omp parallel shared(drwidth) private(aasum,ii)
+        !$omp parallel shared(drwidth,AARATE_SORTED) private(aasum,ii)
         !$omp do 
         do ii = 1, nlevels 
             !might need to be more careful here...
             aasum = sum( AARATE_SORTED(ii,:))
-            if(aasum>0.0d0) then 
+            if(aasum > 0.0d0 .and. drwidth(ii) > 0.0d0) then 
                 !this is correct as aasum doesnt have the radiative rates in it
                 !but can be reused from elsewhere if damp is on for RE 
                 drwidth(ii) = drwidth(ii)/(aasum+drwidth(ii))
