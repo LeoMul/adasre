@@ -5,7 +5,7 @@ subroutine writeout_aa(nlev,eres,configPointer,tg,ntcont,aa)
     !Core marked zero, perhaps. 
     implicit none 
     integer :: nlev,ntcont
-    real*8  :: aa(nlevels,ntcont)
+    real*8  :: aa(ntcont,nlevels)
     real*8  :: eres(nlevels),tg
     integer :: configPointer(nlevels)
    ! real*8  :: branching_ratio(nlevels,ncont)
