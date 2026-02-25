@@ -312,7 +312,10 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     write(99,102) blknum, t2-t1
     print 102,    blknum, t2-t1
 !
-    allocate( AARATE_SORTED(nlevels,numberContinuum ))
+!    allocate( AARATE_SORTED(nlevels,numberContinuum ))
+    
+    allocate( AARATE_SORTED(numberContinuum,nlevels))
+
     allocate (aasums(nlevels))
     aasums = 0.0d0 
     AARATE_SORTED = 0.0d0 
@@ -328,7 +331,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
       LV2 = LV2ARRAY(II)
       aa = abs(AAARRAY(ii))
       !$omp atomic
-      AARATE_SORTED(LV1,LVMAP(LV2)) = aa + AARATE_SORTED(LV1,LVMAP(LV2))
+      AARATE_SORTED(LVMAP(LV2),LV1) = aa + AARATE_SORTED(LVMAP(LV2),LV1)
       !$omp atomic
       aasums(lv1) = aasums(lv1) + aa
     end do  
@@ -388,7 +391,9 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
 !
     call cpu_time(t2)
     write(99, 106) blknum, t2-t1
-!
+    print 106, blknum, t2-t1
+
+    !
 
 
     if (damp .and. radPresent ) then 
@@ -405,7 +410,7 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     !Calculate branching ratios. 
     !call cpu_time(t1)
     t1 = omp_get_wtime()
-    allocate(branching_ratio(nlevels,numberContinuum))
+    allocate(branching_ratio(numberContinuum,nlevels))
     !!!branching_ratio = AARATE_SORTED 
     !$omp parallel shared(branching_ratio,AARATE_SORTED) private(suma,jj,ii)
     !$omp do 
@@ -413,11 +418,11 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
         suma = aasums(jj) !aasums(jj) + drwidth(jj)
         if(suma.gt.0) then 
             do ii  = 1, numberContinuum 
-                branching_ratio(jj,ii)=AARATE_SORTED(jj,ii)/suma
+                branching_ratio(ii,jj)=AARATE_SORTED(ii,jj)/suma
             end do 
         else 
             do ii = 1, numberContinuum
-                branching_ratio(jj,ii) = 0.0d0 
+                branching_ratio(ii,jj) = 0.0d0 
             end do
         end if 
     end do 
