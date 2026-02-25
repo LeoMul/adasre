@@ -18,7 +18,8 @@ SRC= \
     src/adasre.f90\
     src/upsilon.f90\
     src/collstrength.f90\
-    src/coredr.f90
+    src/coredr.f90\
+    src/writeout_aa.f90
 
 OBJ=${SRC:.f90=.o}
 PROGRAM = adasre
