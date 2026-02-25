@@ -3,11 +3,13 @@ subroutine postProcess
     logical :: readCore ,firstread
     logical :: exists_form ,exists_unform
     integer :: fileiter
-    character*2 :: oicFilesForm(9)
-    data oicFilesForm/ 'o1','o2','o3','o4','o5','o6','o7','o8','o9' / 
-    character*3 :: oicFilesUnForm(9)
+    character*3 :: oicFilesForm(18)
+    data oicFilesForm/ 'o1','o2','o3','o4','o5','o6','o7','o8','o9', & 
+    'o10','o11','o12','o13','o14','o15','o16','o17','o18'/ 
+    character*4 :: oicFilesUnForm(18)
     data oicFilesUnForm/ 'o1u','o2u','o3u','o4u','o5u','o6u','o7u', &
-    'o8u','o9u' /  
+    'o8u','o9u','o10u','o11u','o12u','o13u','o14u','o15u','o16u',   & 
+    'o17u','o18u'/  
     
     readCore  = .true. 
     firstread = .true.
