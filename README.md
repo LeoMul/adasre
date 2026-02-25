@@ -10,3 +10,5 @@ The main bottleneck is looping over a large amount of resonances. Unlike many at
 Much like [adasdr](https://amdpp.phys.strath.ac.uk/autos/default/misc/), this code can take a mixture of formatted and unformatted input. The oic files should be symbolic linked to say o1,o2, o3u etc - with the suffix 'u' for unformatted files. 
 
 Current todo's include, an mpi wrapper to process oic files in parallel, and potential reordering of array indices to help with cache misses. 
+
+![plot](CompWithSampsonZhang.png)
