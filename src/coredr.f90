@@ -104,7 +104,7 @@
             do kk = 1, nlevels 
                 !do ff = 1,nlevels 
                     w1 = W_SORTED(kk) 
-                    contribution = AARATE_SORTED(kk,ii)  * drwidth(KK) *w1/w2 
+                    contribution = AARATE_SORTED(ii,kk)  * drwidth(KK) *w1/w2 
                     energydiff = E_RES_SORTED(kk) - energyFromInput(ii) - grounddiff
                     if (contribution>0 .and.energydiff>0) then 
                         !print '(3ES13.4,2F17.8)',energydiff,AARATE_SORTED(kk,ii),ARRATE_SORTED(kk,ff),groundFromInput-thisground,check

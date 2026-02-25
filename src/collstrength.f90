@@ -40,7 +40,7 @@ subroutine collstrength
         width      = half * hbar_ryd * aasums(jj) 
         width2     = width* width 
 !
-        coefficient = h_ryd_on_2 * W_SORTED(jj) * AARATE_SORTED(jj,mylower) * branching_ratio(jj,myupper)
+        coefficient = h_ryd_on_2 * W_SORTED(jj) * AARATE_SORTED(mylower,jj) * branching_ratio(myupper,jj)
         coefficient = coefficient * overpi * width
         do ii = 1, collstrengnpoints 
             lorentzarray(ii) =  coefficient / ( (energyGrid(ii) - energydiff)**2 + width2 )

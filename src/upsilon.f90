@@ -50,13 +50,13 @@ subroutine resonantUpsilon( )
 !
       lower_loop: do lower = 1,nmax-1
 !
-        a = AARATE_SORTED  (dd,lower) * w * h_ryd_on_2  
+        a = AARATE_SORTED  (lower,dd) * w * h_ryd_on_2  
         if (a .le. 0.0d0 ) cycle lower_loop !skip if the dielectronic capture is negligible.
 !
         upper_loop: do upper = lower+1,nmax
 !
           energydiff = E_RES_SORTED(dd)-energyFromInput(upper)                                  
-          b = branching_ratio(dd,upper)
+          b = branching_ratio(upper,dd)
           if ( (energydiff .gt. 0.0d0) .and. (b .gt. 0.0d0) ) then 
             strength = a * b 
 !

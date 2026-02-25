@@ -33,7 +33,7 @@ subroutine writeout_aa(nlev,eres,configPointer,tg,ntcont,aa)
 
     do ii = 1, nlev 
         if ( (configPointer(ii) > 0) .and. (configPointer(ii) .le. ncontium_cf_UNIQUE)) then 
-            write(64,'(f15.8,a,es15.8,a,a23,a,i6)') eres(ii) - groundFromInput ,',',aa(ii,1) ,',',rydbergLabel(configPointer(ii)) ,',',configPointer(ii)
+            write(64,'(f15.8,a,es15.8,a,a23,a,i6)') eres(ii) - groundFromInput ,',',aa(1,ii) ,',',rydbergLabel(configPointer(ii)) ,',',configPointer(ii)
         end if
     end do 
 
