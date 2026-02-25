@@ -11,6 +11,6 @@ Much like [adasdr](https://amdpp.phys.strath.ac.uk/autos/default/misc/), this co
 
 Current todo's include, an mpi wrapper to process oic files in parallel, and potential reordering of array indices to help with cache misses. 
 
-The code has been tested (in conjunction with autostructure) against work in the literature. The work of [Zhang & Sampson (1987)](https://adsabs.harvard.edu/full/1987ApJS...63..487Z) investigated He-like ions with resonant and distorted wave excitation. The collision strengths are later presented in [Sampson, Zhang & Fontes (2009)], which are compared with below. Aside from slight positional differences in the resonances, the heights and widths of the Lorentzians are in broad agreement giving confidence in the processor maintained in this repository.
+The code has been tested (in conjunction with autostructure) against work in the literature. The work of [Zhang & Sampson (1987)](https://adsabs.harvard.edu/full/1987ApJS...63..487Z) investigated He-like ions with resonant and distorted wave excitation. The collision strengths are later presented in [Sampson, Zhang & Fontes (2009)](https://www.sciencedirect.com/science/article/pii/S037015730900129X?ref=cra_js_challenge&fr=RR-1), which are compared with below. Aside from slight positional differences in the resonances, the heights and widths of the Lorentzians are in broad agreement giving confidence in the processor maintained in this repository.
 
 ![plot](CompWithSampsonZhang.png)
