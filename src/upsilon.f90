@@ -45,23 +45,28 @@ subroutine resonantUpsilon( )
     !$omp do schedule(static) !!!
 !
     resonant_loop: do dd = 1, nlevels !number of lv numbers
+!
       w = W_SORTED(dd)
 !
-      lower_loop: do lower = 1,nmax 
+      lower_loop: do lower = 1,nmax-1
+!
         a = AARATE_SORTED  (dd,lower) * w * h_ryd_on_2  
         if (a .le. 0.0d0 ) cycle lower_loop !skip if the dielectronic capture is negligible.
 !
         upper_loop: do upper = lower+1,nmax
+!
           energydiff = E_RES_SORTED(dd)-energyFromInput(upper)                                  
           b = branching_ratio(dd,upper)
           if ( (energydiff .gt. 0.0d0) .and. (b .gt. 0.0d0) ) then 
             strength = a * b 
 !
             temp_loop: do kk = 1, ntemps 
+!
               oneOverT = oneOverTArray(kk)
               tfac = exp(- energydiff * oneOverT )* oneOverT 
               upsilon(kk,lower,upper) = &
               upsilon(kk,lower,upper) + strength * tfac
+!
             end do temp_loop
 !
           end if
