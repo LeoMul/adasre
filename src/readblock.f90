@@ -482,11 +482,16 @@ subroutine readblock(eof,core,blknum,formatted,firstread,filename)
     write(99, 999)
     print 999
     call flush(99)
-    call writeout_aa(nlevels,E_RES_SORTED,configPointer,thisground,numberContinuum,AARATE_SORTED)
-    deallocate(lvmap)
+!
+    if (printRes) then 
+        call writeout_aa(nlevels,E_RES_SORTED,configPointer,thisground, & 
+                         numberContinuum,AARATE_SORTED)
+    end if 
 !
     numberContinuumSave = numberContinuum
+!
     !clean up after yourself.
+    deallocate(lvmap)
     deallocate(configPointer)
     deallocate(amICore,configMarker)
     deallocate( AARATE_SORTED)
