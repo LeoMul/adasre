@@ -51,10 +51,12 @@ module tempgrid
         implicit none
         integer :: temps 
         integer :: ii 
+        integer :: iostat 
         if(allocated(temps_kelvin)) deallocate(temps_kelvin)
         ntemps = temps
         allocate(temps_kelvin(temps))
-        read(50,*) (temps_kelvin(ii),ii=1,ntemps)
+        read(50,iostat = iostat) (temps_kelvin(ii),ii=1,ntemps)
+        if (iostat.ne.0 ) stop 'error reading user temps'
     end subroutine
 
     subroutine logTempGrid(temps,p1,p2)
