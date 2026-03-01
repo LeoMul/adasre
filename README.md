@@ -10,24 +10,32 @@ The code expects a file called `input` - containing a namelist `&adasre` with th
 Much like [adasdr](https://amdpp.phys.strath.ac.uk/autos/default/misc/), this code can take a mixture of formatted and unformatted input. The oic files should be symbolic linked to say o1,o2, o3u etc - with the suffix 'u' for unformatted files. 
 
 We assume the collision strengths follow
+
 $$
     \Omega^{\text{res}}_{ij} = \frac{1}{2}h \sum_d \frac{g_d A^a_{d \to i} A^a_{d \to j}}{\sum_k A^a_{d\to k} + R_d} \delta(\epsilon - E_{id}), 
 $$
+
 where $i$, $j$, $d$ denote the initial, final and resonant states. $h$ is the (not reduced) constant of Planck, $g_d$ is the statistical weight of the intermediate resonant state. $A^a_{2 \to 1}$ is the Auger (autoionization) rate between two states. $E_{id} = E_d - E_i$ is the resonant energy relative to the initial state. $R_d$ is an optional damping factor given by,
+
 $$\begin{align*}
 R_d &= 0 ~~~~~~~~~~~~~~~~~\text{ if idamp = 0 (default)} \\
 R_d &= \sum_k A^r_{d\to k}~~~~\text{otherwise}
 \end{align*}$$
+
 where $A^r_{d\to k}$ are the radiative rates. Note that the use of the above requires radiative rates to have been produced in your `AUTOSTRUCTURE` run.
 
 The assumption of delta functions allows us to go to straight to the Maxwellian-Averaged values via the well known formula
+
 $$
     \Upsilon_{ij} =\int_0^\infty \Omega_{ij}(\epsilon_j) \exp(-\epsilon_j/kT) d(\epsilon_j/kT)
 $$
+
 where $\epsilon_j$ is the post-collision energy of the scattered electron. We then have,
+
 $$
     \Upsilon^{\text{res}}_{if} = \frac{1}{2}\frac{h}{kT} \sum_d \frac{g_d A^a_{d \to i} A^a_{d \to j}}{\sum_k A^a_{d\to k}} \exp\Big( - \frac{E_{id} - E_{ij}}{kT}\Big),
 $$ 
+
 where of course $E_{id} - E_{ij} = E_{df}$. 
 
 Should the user desire the collision strengths themselves, these can output via the namelist variable `collstreng` $ = n$, with $n$ the number of desired transitions. The specific level indices of the transition must follow the input energies.
