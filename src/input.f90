@@ -54,15 +54,14 @@ subroutine input()
     ! temp grid 
 
     select case (temp)
-    case(-2)
-        call logTempGrid(temp,p1,p2)
+    case( :-2)
+        call logTempGrid(abs(temp),p1,p2)
     case(-1)
         call knetempgrid 
     case(0) 
         call defaulttempgrid
     case default 
-        call readtempgrid(temp)
-    
+        call readtempgrid(temp)    
     end select 
 
     !!!if (temp == 0) then 
