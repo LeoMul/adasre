@@ -54,8 +54,11 @@ subroutine adf04
             write(30,'(A7,1X)') '0.00+00'
         end do 
     end do 
-    write(30,'(2I5)') -1,-1
-    write(30, '(I5)') -1 
+    write(30,'(2I4)') -1,-1
+    write(30, '(I4)') -1 
+
+    write(30,*) 'C Resonant contribution to collisional electron excitation.'
+    write(30,*) 'C Produced by adasre https://github.com/LeoMul/adasre.'
 
     close(30)
 
