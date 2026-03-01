@@ -15,8 +15,9 @@ subroutine input()
     character*5 :: inputfile   = 'input'
     integer     :: idamp 
     integer     :: ires 
+    real*8      :: p1,p2 
     namelist /adasre/ numtot,nmax,initresdim,calcdr,collstreng,minERyd, & 
-    maxERyd,collstrengnpoints, temp,idamp,ires 
+    maxERyd,collstrengnpoints, temp,idamp,ires,p1,p2 
 !
     !   Initialize defaults 
     numtot     =  0 
@@ -28,6 +29,8 @@ subroutine input()
     temp       =  0
     idamp      =  0
     ires       =  0
+    p1         =  2 
+    p2         =  6
 
     damp = .false.
 !   Check for the input
@@ -49,13 +52,26 @@ subroutine input()
     if (idamp      .NE.  0) damp = .true.
     if (ires        .ne.  0) printRes = .true.
     ! temp grid 
-    if (temp == 0) then 
-        call defaulttempgrid 
-    else if (temp == -1) then
-        call knetempgrid
-    else 
-        call readtempgrid(temp) 
-    end if 
+
+    select case (temp)
+    case(-2)
+        call logTempGrid(temp,p1,p2)
+    case(-1)
+        call knetempgrid 
+    case(0) 
+        call defaulttempgrid
+    case default 
+        call readtempgrid(temp)
+    
+    end select 
+
+    !!!if (temp == 0) then 
+    !!!    call defaulttempgrid 
+    !!!else if (temp == -1) then
+    !!!    call knetempgrid
+    !!!else 
+    !!!    call readtempgrid(temp) 
+    !!!end if 
     
     write(25,*) 'proceeding with ',numtot,nmax,initresdim
 !   All of the stuff from the LEVELS file.

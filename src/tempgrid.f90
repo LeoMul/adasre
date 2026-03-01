@@ -28,6 +28,7 @@ module tempgrid
     end subroutine
 !
     subroutine defaulttempgrid
+        implicit none
         ntemps = 9 
         if(allocated(temps_kelvin)) deallocate(temps_kelvin)
         allocate(temps_kelvin(ntemps))    
@@ -47,12 +48,27 @@ module tempgrid
     end subroutine
 
     subroutine readtempgrid(temps)
+        implicit none
         integer :: temps 
         integer :: ii 
         if(allocated(temps_kelvin)) deallocate(temps_kelvin)
         ntemps = temps
         allocate(temps_kelvin(temps))
         read(50,*) (temps_kelvin(ii),ii=1,ntemps)
+    end subroutine
+
+    subroutine logTempGrid(temps,p1,p2)
+        implicit none
+        integer :: temps
+        real*8 :: p1,p2,dp 
+        integer :: jj 
+        if(allocated(temps_kelvin)) deallocate(temps_kelvin)
+        ntemps = temps
+        allocate(temps_kelvin(temps))
+        dp = (p2 - p1) / real(temps-1,8) 
+        do jj = 1, ntemps 
+            temps_kelvin(jj) = 10.0d0 ** ( p1  + (jj-1) * dp ) 
+        end do 
     end subroutine
 
 end module tempgrid 
